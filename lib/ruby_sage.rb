@@ -9,6 +9,7 @@ require "ruby_sage/engine"
 require "ruby_sage/secret_redactor"
 require "ruby_sage/summarizer"
 require "ruby_sage/scanner"
+require "ruby_sage/retriever"
 
 # RubySage exposes a Rails engine for scanning a host application and serving
 # code-aware assistance.
@@ -64,5 +65,17 @@ module RubySage
   # @return [nil]
   def self.reset_provider!
     @provider = nil
+  end
+
+  # Retrieves code context for a natural-language query.
+  #
+  # @example
+  #   RubySage.context_for("how does donor matching work?")
+  #
+  # @param query [String]
+  # @param page_context [Hash, nil]
+  # @return [Hash]
+  def self.context_for(query, page_context: nil)
+    Retriever.new.call(query: query, page_context: page_context)
   end
 end

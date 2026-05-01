@@ -10,8 +10,17 @@ module RubySage
     validates :path, presence: true
     validates :digest, presence: true
 
-    serialize :public_symbols, coder: JSON
-    serialize :route_mappings, coder: JSON
+    def self.serialize_json(attribute)
+      if method(:serialize).parameters.any? { |type, name| type == :key && name == :coder }
+        serialize attribute, coder: JSON
+      else
+        serialize attribute, JSON
+      end
+    end
+    private_class_method :serialize_json
+
+    serialize_json :public_symbols
+    serialize_json :route_mappings
 
     scope :of_kind, ->(kind) { where(kind: kind) }
   end

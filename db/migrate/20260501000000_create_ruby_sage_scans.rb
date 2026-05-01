@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class CreateRubySageScans < ActiveRecord::Migration[7.0]
+class CreateRubySageScans < ActiveRecord::Migration[5.2]
   def change
     create_table :ruby_sage_scans do |t|
       t.string :status, null: false, default: "pending"
