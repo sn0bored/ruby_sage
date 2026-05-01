@@ -16,12 +16,12 @@ RSpec.describe "RubySage chat", type: :request do
   end
 
   it "returns forbidden by default" do
-    post "/ruby_sage/chat", params: { message: "posts" }, as: :json
+    post "/ruby_sage/chat", params: { messages: [{ role: "user", content: "posts" }] }, as: :json
 
     expect(response).to have_http_status(:forbidden)
   end
 
-  it "returns bad request when the message param is missing" do
+  it "returns bad request when neither message nor messages param is present" do
     allow_access
 
     post "/ruby_sage/chat", params: {}, as: :json
@@ -29,14 +29,56 @@ RSpec.describe "RubySage chat", type: :request do
     expect(response).to have_http_status(:bad_request)
   end
 
-  it "returns an answer with citations, scan id, and usage" do
-    allow_access
-    scan = seed_completed_scan
-    stub_provider(provider_response)
+  context "with single message param (legacy format)" do
+    it "returns an answer" do
+      allow_access
+      seed_completed_scan
+      stub_provider(provider_response)
 
-    post "/ruby_sage/chat", params: chat_params, as: :json
+      post "/ruby_sage/chat", params: { message: "posts" }, as: :json
 
-    expect_successful_chat_response(scan)
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body["answer"]).to eq("PostsController#index lists posts.")
+    end
+  end
+
+  context "with messages array (multi-turn format)" do
+    it "returns an answer with citations, scan id, and usage" do
+      allow_access
+      scan = seed_completed_scan
+      stub_provider(provider_response)
+
+      post "/ruby_sage/chat", params: multi_turn_params, as: :json
+
+      expect_successful_chat_response(scan)
+    end
+
+    it "passes the full conversation history to the provider" do
+      allow_access
+      seed_completed_scan
+      provider = stub_provider(provider_response)
+
+      post "/ruby_sage/chat", params: multi_turn_params, as: :json
+
+      expect(provider).to have_received(:chat) do |kwargs|
+        messages = kwargs[:messages]
+        expect(messages.map { |m| m[:role] }).to eq(%w[user assistant user])
+      end
+    end
+
+    it "uses the last user message as the retrieval query" do
+      allow_access
+      seed_completed_scan
+      stub_provider(provider_response)
+      retriever = instance_double(RubySage::Retriever, call: empty_retrieval)
+      allow(RubySage::Retriever).to receive(:new).and_return(retriever)
+
+      post "/ruby_sage/chat", params: multi_turn_params, as: :json
+
+      expect(retriever).to have_received(:call).with(
+        hash_including(query: "follow up question about posts")
+      )
+    end
   end
 
   it "returns bad gateway when the provider fails" do
@@ -67,8 +109,8 @@ RSpec.describe "RubySage chat", type: :request do
 
   def stub_provider(response)
     provider = instance_double(RubySage::Providers::Base, chat: response)
-
     allow(RubySage).to receive(:provider).and_return(provider)
+    provider
   end
 
   def stub_failing_provider
@@ -77,13 +119,14 @@ RSpec.describe "RubySage chat", type: :request do
     allow(RubySage).to receive(:provider).and_return(provider)
   end
 
-  def chat_params
+  def multi_turn_params
     {
-      message: "posts",
-      page_context: {
-        url: "https://example.com/posts",
-        title: "Posts"
-      }
+      messages: [
+        { role: "user", content: "tell me about posts" },
+        { role: "assistant", content: "PostsController handles post CRUD." },
+        { role: "user", content: "follow up question about posts" }
+      ],
+      page_context: { url: "https://example.com/posts", title: "Posts" }
     }
   end
 
@@ -91,28 +134,21 @@ RSpec.describe "RubySage chat", type: :request do
     {
       answer: "PostsController#index lists posts.",
       citations: [],
-      usage: {
-        input_tokens: 12,
-        output_tokens: 7
-      }
+      usage: { input_tokens: 12, output_tokens: 7 }
     }
+  end
+
+  def empty_retrieval
+    { artifacts: [], citations: [], scan_id: nil }
   end
 
   def expect_successful_chat_response(scan)
     expect(response).to have_http_status(:ok)
-    expect_successful_payload(scan)
-    expect_successful_citation
-  end
-
-  def expect_successful_payload(scan)
     expect(response.parsed_body).to include(
       "answer" => "PostsController#index lists posts.",
       "scan_id" => scan.id,
       "usage" => { "input_tokens" => 12, "output_tokens" => 7 }
     )
-  end
-
-  def expect_successful_citation
     expect(response.parsed_body["citations"].first).to include(
       "path" => "app/controllers/posts_controller.rb",
       "kind" => "controller"
