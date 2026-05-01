@@ -1,0 +1,36 @@
+/.bundle/
+/.yardoc
+/_yardoc/
+/coverage/
+/doc/
+/pkg/
+/spec/reports/
+/tmp/
+
+# rspec failure tracking
+.rspec_status
+
+# Bundler
+Gemfile.lock
+*.gem
+
+# Dummy app
+spec/dummy/db/*.sqlite3
+spec/dummy/db/*.sqlite3-*
+spec/dummy/log/*.log
+spec/dummy/storage/
+spec/dummy/tmp/
+
+# Local config
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Claude / Coda local state
+.claude/
