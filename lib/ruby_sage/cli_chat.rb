@@ -48,13 +48,7 @@ module RubySage
     private
 
     def chat_system_prompt
-      <<~PROMPT
-        You are answering questions about a Ruby on Rails application's source code.
-        Answer using only the artifacts in the provided context. If the context does
-        not contain enough information to answer, say so plainly. Always be specific:
-        reference class and method names, file paths, and route mappings when relevant.
-        Keep answers tight — no preamble, no apology, no fluff.
-      PROMPT
+      RubySage::Prompts.for_mode(@config.mode)
     end
 
     def build_context(artifacts)
