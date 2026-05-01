@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 module RubySage
-  # Handles a single chat turn by retrieving relevant artifacts, calling the
-  # configured provider, and returning an answer with citations.
+  # Handles a chat turn — single message or multi-turn — by retrieving relevant
+  # artifacts, calling the configured provider, and returning an answer with
+  # citations. Accepts either a +messages+ array (multi-turn) or a legacy single
+  # +message+ string for backwards compatibility.
   class ChatController < ApplicationController
-    skip_before_action :verify_authenticity_token
-
     SYSTEM_PROMPT = <<~PROMPT
       You are answering questions about a Ruby on Rails application's source code.
       Answer using only the artifacts in the provided context. If the context does
@@ -13,15 +13,18 @@ module RubySage
       reference class and method names, file paths, and route mappings when relevant.
       Keep answers tight - no preamble, no apology, no fluff.
     PROMPT
+    private_constant :SYSTEM_PROMPT
 
     # Answers a user question against retrieved codebase artifacts.
+    # Accepts multi-turn +messages+ array or a single +message+ string.
     #
     # @return [void]
     def create
-      message = params.require(:message)
+      messages = permitted_messages
       page_context = permitted_page_context
-      retrieval = RubySage::Retriever.new.call(query: message, page_context: page_context)
-      provider_response = provider_response_for(message, page_context, retrieval)
+      query = last_user_message(messages)
+      retrieval = RubySage::Retriever.new.call(query: query, page_context: page_context)
+      provider_response = provider_response_for(messages, page_context, retrieval)
 
       render json: response_payload(provider_response, retrieval)
     rescue Providers::ProviderError => e
@@ -31,6 +34,28 @@ module RubySage
     end
 
     private
+
+    # Extracts the conversation as a normalized messages array. Accepts either
+    # a +messages+ array param (multi-turn) or falls back to a single +message+
+    # string (legacy single-turn format).
+    #
+    # @return [Array<Hash>] messages with symbolized :role and :content keys.
+    # @raise [ActionController::ParameterMissing] when neither param is present.
+    def permitted_messages
+      if params[:messages].present?
+        params.require(:messages).map { |m| m.permit(:role, :content).to_h.symbolize_keys }
+      else
+        [{ role: "user", content: params.require(:message) }]
+      end
+    end
+
+    # Extracts the most recent user message for use as the retrieval query.
+    #
+    # @param messages [Array<Hash>]
+    # @return [String]
+    def last_user_message(messages)
+      messages.reverse.find { |m| m[:role].to_s == "user" }&.dig(:content).to_s
+    end
 
     def permitted_page_context
       page_context = params[:page_context]
@@ -51,18 +76,30 @@ module RubySage
       "Codebase context:\n\n#{blocks.join("\n---\n\n")}"
     end
 
-    def build_messages(user_message, page_context)
-      content = user_message
-      content += "\n\n[Currently viewing: #{page_context[:url]}]" if page_context&.dig(:url)
+    # Prepends page context to the first user message so the provider sees it
+    # without polluting the conversation history the caller maintains.
+    #
+    # @param messages [Array<Hash>]
+    # @param page_context [Hash, nil]
+    # @return [Array<Hash>]
+    def messages_with_context(messages, page_context)
+      return messages unless page_context&.dig(:url)
 
-      [{ role: "user", content: content }]
+      first_user_idx = messages.index { |m| m[:role].to_s == "user" }
+      return messages if first_user_idx.nil?
+
+      annotated = messages.dup
+      first = annotated[first_user_idx].dup
+      first[:content] = "#{first[:content]}\n\n[Currently viewing: #{page_context[:url]}]"
+      annotated[first_user_idx] = first
+      annotated
     end
 
-    def provider_response_for(message, page_context, retrieval)
+    def provider_response_for(messages, page_context, retrieval)
       RubySage.provider.chat(
         system_prompt: SYSTEM_PROMPT,
         cached_context: build_artifact_context(retrieval[:artifacts]),
-        messages: build_messages(message, page_context)
+        messages: messages_with_context(messages, page_context)
       )
     end
 
