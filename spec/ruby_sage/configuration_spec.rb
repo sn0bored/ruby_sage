@@ -11,6 +11,7 @@ RSpec.describe RubySage::Configuration do
       summarization_model: "claude-haiku-4-5",
       auth_check: nil,
       scope: :admin,
+      mode: :developer,
       scan_retention: 7,
       csp_nonce: nil,
       request_timeout: 30,

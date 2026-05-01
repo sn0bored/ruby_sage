@@ -2,6 +2,7 @@
 
 require "ruby_sage/version"
 require "ruby_sage/configuration"
+require "ruby_sage/prompts"
 require "ruby_sage/providers/base"
 require "ruby_sage/providers/anthropic"
 require "ruby_sage/providers/openai"
