@@ -6,6 +6,9 @@ require "ruby_sage/providers/base"
 require "ruby_sage/providers/anthropic"
 require "ruby_sage/providers/openai"
 require "ruby_sage/engine"
+require "ruby_sage/secret_redactor"
+require "ruby_sage/summarizer"
+require "ruby_sage/scanner"
 
 # RubySage exposes a Rails engine for scanning a host application and serving
 # code-aware assistance.
