@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class CreateRubySageArtifacts < ActiveRecord::Migration[7.0]
+class CreateRubySageArtifacts < ActiveRecord::Migration[5.2]
   def change
     create_table :ruby_sage_artifacts do |t|
       t.references :scan, null: false, foreign_key: { to_table: :ruby_sage_scans }
