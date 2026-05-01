@@ -1,5 +1,19 @@
 # RubySage — Architecture & Build Plan
 
+## Quality bar
+
+This gem aspires to Rails-core acceptability. Concretely:
+
+- **Idiomatic Ruby.** SOLID. Small composable classes. Names reveal intent. No magic, no unexplained metaprogramming.
+- **Public API documented.** Every public method has a YARD doc block (params, return, raises, example).
+- **Backward compatibility from 0.1.0.** Semantic versioning. Deprecation warnings before removal. No silent breaking changes.
+- **Minimal runtime dependencies.** Rails + Ruby stdlib only for V1. Provider HTTP calls use `Net::HTTP` or Rails' built-in HTTP client. Adding a dependency requires a justification.
+- **Comprehensive RSpec coverage.** Edge cases tested. Mocking only at integration boundaries (HTTP, FS). No mocking of internal collaborators.
+- **Code that reads like prose.** If a method needs a comment to explain WHAT, rename or refactor it. Comments explain WHY.
+- **README worthy of a popular gem.** Install / configure / quickstart / API reference / contribute / license. With a screenshot of the widget.
+
+RSpec green and RuboCop clean are **gates**, not aspirations. CI must be green before any phase is declared done.
+
 ## What it is
 
 A Rails engine, distributed as the `ruby_sage` gem, that:

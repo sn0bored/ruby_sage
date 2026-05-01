@@ -10,6 +10,17 @@ A Rails engine packaged as the `ruby_sage` gem. Public OSS, MIT-licensed, lives 
 
 `PLAN.md` is the authoritative architecture and build plan. Follow it. If you think the plan is wrong, write your reasoning into your task summary — do not silently deviate.
 
+## Quality bar
+
+We are building this as if it could be merged into Rails core. That means:
+
+- Every public method has a YARD doc block.
+- Every behavior has a corresponding RSpec test.
+- No magic, no unexplained metaprogramming. Names reveal intent.
+- Dependencies kept tight: Rails + Ruby stdlib are enough for V1.
+- RuboCop clean and RSpec green are **gates**, not aspirations. CI must be green before declaring a phase done.
+- If a method needs a comment to explain WHAT it does, rename or refactor it. Comments explain WHY.
+
 ## Hard rules
 
 - **Public repo, zero data leakage.** No proprietary code, schemas, env values, or fixtures from any other Lanier/TYB/PollyStop/Changemaker app may land in this repo.
