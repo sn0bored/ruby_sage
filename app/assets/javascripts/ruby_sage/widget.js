@@ -21,7 +21,7 @@
     button.type = "button";
     button.className = "ruby-sage-button";
     button.setAttribute("aria-label", "Open codebase chat");
-    button.textContent = "Ask";
+    button.textContent = "How does this work?";
     root.appendChild(button);
 
     var drawer = createDrawer(mountPath);
@@ -35,49 +35,74 @@
   }
 
   function createDrawer(mountPath) {
+    var history = [];  // conversation history for this drawer instance
+
     var drawer = document.createElement("aside");
     drawer.className = "ruby-sage-drawer";
     drawer.innerHTML =
       '<header class="ruby-sage-header">' +
         '<span class="ruby-sage-title">RubySage</span>' +
-        '<button type="button" class="ruby-sage-close" aria-label="Close">x</button>' +
+        '<button type="button" class="ruby-sage-clear" aria-label="Clear conversation" title="Clear conversation">&#8635;</button>' +
+        '<button type="button" class="ruby-sage-close" aria-label="Close">&#x2715;</button>' +
       "</header>" +
       '<div class="ruby-sage-thread" role="log" aria-live="polite"></div>' +
       '<form class="ruby-sage-form">' +
-        '<input class="ruby-sage-input" type="text" placeholder="Ask about this codebase..." autocomplete="off" />' +
+        '<input class="ruby-sage-input" type="text" placeholder="Ask about this page or your whole codebase..." autocomplete="off" />' +
         '<button type="submit" class="ruby-sage-submit">Send</button>' +
       "</form>";
+
+    var thread = drawer.querySelector(".ruby-sage-thread");
+    var form = drawer.querySelector(".ruby-sage-form");
+    var input = drawer.querySelector(".ruby-sage-input");
 
     drawer.querySelector(".ruby-sage-close").addEventListener("click", function() {
       drawer.classList.remove("ruby-sage-drawer--open");
     });
 
-    var thread = drawer.querySelector(".ruby-sage-thread");
-    var form = drawer.querySelector(".ruby-sage-form");
-    var input = drawer.querySelector(".ruby-sage-input");
+    drawer.querySelector(".ruby-sage-clear").addEventListener("click", function() {
+      history = [];
+      thread.innerHTML = "";
+    });
 
     form.addEventListener("submit", function(event) {
       event.preventDefault();
       var message = (input.value || "").trim();
       if (!message) return;
       input.value = "";
+
+      history.push({ role: "user", content: message });
       appendMessage(thread, "user", message);
 
       var pending = appendMessage(thread, "assistant", "...");
       pending.classList.add("ruby-sage-pending");
+      setFormDisabled(form, true);
 
-      sendChat(mountPath, message, getPageContext(), function(err, response) {
+      sendChat(mountPath, history, getPageContext(), function(err, response) {
         pending.classList.remove("ruby-sage-pending");
+        setFormDisabled(form, false);
+        input.focus();
+
         if (err) {
-          pending.textContent = "Error: " + err.message;
+          pending.textContent = "Something went wrong. Please try again.";
           pending.classList.add("ruby-sage-error");
+          // Remove the failed user message from history so it can be retried.
+          history.pop();
           return;
         }
+
+        history.push({ role: "assistant", content: response.answer || "" });
         renderAnswer(pending, response);
       });
     });
 
     return drawer;
+  }
+
+  function setFormDisabled(form, disabled) {
+    var input = form.querySelector(".ruby-sage-input");
+    var submit = form.querySelector(".ruby-sage-submit");
+    if (input) input.disabled = disabled;
+    if (submit) submit.disabled = disabled;
   }
 
   function appendMessage(thread, role, text) {
@@ -91,29 +116,44 @@
 
   function renderAnswer(node, response) {
     node.textContent = "";
-    var answer = document.createElement("div");
+
+    var answer = document.createElement("p");
     answer.className = "ruby-sage-answer";
     answer.textContent = response.answer || "(no answer)";
     node.appendChild(answer);
 
-    if (response.citations && response.citations.length) {
-      var list = document.createElement("ul");
-      list.className = "ruby-sage-citations";
-      response.citations.forEach(function(c) {
-        var item = document.createElement("li");
-        item.textContent = c.path + " (" + c.kind + ")";
-        list.appendChild(item);
-      });
-      node.appendChild(list);
-    }
+    var citations = (response.citations || []).filter(function(c) { return c.snippet; });
+    if (!citations.length) return;
+
+    var details = document.createElement("details");
+    details.className = "ruby-sage-sources";
+    var summary = document.createElement("summary");
+    summary.textContent = citations.length === 1 ? "1 source" : citations.length + " sources";
+    details.appendChild(summary);
+
+    var list = document.createElement("ul");
+    citations.forEach(function(c) {
+      var item = document.createElement("li");
+      var snippet = document.createElement("span");
+      snippet.className = "ruby-sage-source-snippet";
+      snippet.textContent = c.snippet;
+      var path = document.createElement("code");
+      path.className = "ruby-sage-source-path";
+      path.textContent = c.path;
+      item.appendChild(snippet);
+      item.appendChild(path);
+      list.appendChild(item);
+    });
+    details.appendChild(list);
+    node.appendChild(details);
   }
 
   function getPageContext() {
     return { url: window.location.href, title: document.title };
   }
 
-  // V1: single fetch. Swapping JSON for SSE later should stay localized here.
-  function sendChat(mountPath, message, pageContext, callback) {
+  // V1: single fetch. Swapping JSON for SSE in v1.5 should stay localized here.
+  function sendChat(mountPath, messages, pageContext, callback) {
     var url = mountPath.replace(/\/$/, "") + "/chat";
     var token = csrfToken();
     var headers = { "Content-Type": "application/json", "Accept": "application/json" };
@@ -123,7 +163,7 @@
       method: "POST",
       credentials: "same-origin",
       headers: headers,
-      body: JSON.stringify({ message: message, page_context: pageContext })
+      body: JSON.stringify({ messages: messages, page_context: pageContext })
     })
       .then(function(r) {
         if (!r.ok) throw new Error("HTTP " + r.status);
