@@ -51,6 +51,9 @@ module RubySage
     #   @return [Proc, nil] callable receiving the controller instance.
     # @!attribute [rw] scope
     #   @return [Symbol] authorization fallback scope.
+    # @!attribute [rw] mode
+    #   @return [Symbol] widget persona: +:developer+, +:admin+, or +:user+.
+    #     Controls the system prompt and starter questions shown in the widget.
     # @!attribute [rw] scan_retention
     #   @return [Integer] number of scans to retain.
     # @!attribute [rw] scanner_include
@@ -64,7 +67,7 @@ module RubySage
     # @!attribute [rw] max_retries
     #   @return [Integer] maximum provider retry attempts.
     attr_accessor :provider, :api_key, :model, :summarization_model,
-                  :auth_check, :scope, :scan_retention,
+                  :auth_check, :scope, :mode, :scan_retention,
                   :scanner_include, :scanner_exclude,
                   :csp_nonce, :request_timeout, :max_retries
 
@@ -76,6 +79,7 @@ module RubySage
       @model = "claude-sonnet-4-6"
       @summarization_model = "claude-haiku-4-5"
       @scope = :admin
+      @mode = :developer
       @scan_retention = 7
       @scanner_include = default_scanner_include
       @scanner_exclude = default_scanner_exclude

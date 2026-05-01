@@ -4,17 +4,9 @@ module RubySage
   # Handles a chat turn — single message or multi-turn — by retrieving relevant
   # artifacts, calling the configured provider, and returning an answer with
   # citations. Accepts either a +messages+ array (multi-turn) or a legacy single
-  # +message+ string for backwards compatibility.
+  # +message+ string for backwards compatibility. The system prompt adapts to the
+  # configured +mode+ (:developer, :admin, or :user) via {RubySage::Prompts}.
   class ChatController < ApplicationController
-    SYSTEM_PROMPT = <<~PROMPT
-      You are answering questions about a Ruby on Rails application's source code.
-      Answer using only the artifacts in the provided context. If the context does
-      not contain enough information to answer, say so plainly. Always be specific:
-      reference class and method names, file paths, and route mappings when relevant.
-      Keep answers tight - no preamble, no apology, no fluff.
-    PROMPT
-    private_constant :SYSTEM_PROMPT
-
     # Answers a user question against retrieved codebase artifacts.
     # Accepts multi-turn +messages+ array or a single +message+ string.
     #
@@ -97,7 +89,7 @@ module RubySage
 
     def provider_response_for(messages, page_context, retrieval)
       RubySage.provider.chat(
-        system_prompt: SYSTEM_PROMPT,
+        system_prompt: RubySage::Prompts.for_mode(RubySage.configuration.mode),
         cached_context: build_artifact_context(retrieval[:artifacts]),
         messages: messages_with_context(messages, page_context)
       )
