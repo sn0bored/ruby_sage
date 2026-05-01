@@ -5,6 +5,11 @@ RubySage::Engine.routes.draw do
 
   post "/chat", to: "chat#create"
 
+  namespace :admin do
+    resources :scans, only: %i[index create]
+    resources :artifacts, only: %i[index]
+  end
+
   scope :internal do
     post "/retrieve", to: "internal/retrieve#create"
   end
