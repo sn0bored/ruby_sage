@@ -8,7 +8,8 @@
     root.dataset.rubySageMounted = "true";
 
     var mountPath = root.dataset.mount || "/ruby_sage";
-    renderWidget(root, mountPath);
+    var mode = root.dataset.mode || "developer";
+    renderWidget(root, mountPath, mode);
   }
 
   function unmount() {
@@ -16,7 +17,7 @@
     if (root) delete root.dataset.rubySageMounted;
   }
 
-  function renderWidget(root, mountPath) {
+  function renderWidget(root, mountPath, mode) {
     var button = document.createElement("button");
     button.type = "button";
     button.className = "ruby-sage-button";
@@ -24,7 +25,7 @@
     button.textContent = "How does this work?";
     root.appendChild(button);
 
-    var drawer = createDrawer(mountPath);
+    var drawer = createDrawer(mountPath, mode);
     document.body.appendChild(drawer);
 
     button.addEventListener("click", function() {
@@ -34,15 +35,30 @@
     });
   }
 
-  var STARTER_QUESTIONS = [
-    "What are the main models and how do they relate?",
-    "How does authentication work?",
-    "Walk me through the main user workflow.",
-    "What background jobs are there and what do they do?"
-  ];
+  var STARTER_QUESTIONS = {
+    developer: [
+      "What are the main models and how do they relate?",
+      "How does authentication work?",
+      "Walk me through the main user workflow.",
+      "What background jobs are there and what do they do?"
+    ],
+    admin: [
+      "What features are available and how do they work?",
+      "Walk me through the main user workflows.",
+      "What roles and permissions exist in this app?",
+      "How does the billing or subscription system work?"
+    ],
+    user: [
+      "How do I get started?",
+      "What can I do on this page?",
+      "How do I update my account or settings?",
+      "How do I contact support?"
+    ]
+  };
 
-  function createDrawer(mountPath) {
+  function createDrawer(mountPath, mode) {
     var history = [];  // conversation history for this drawer instance
+    var starterQuestions = (STARTER_QUESTIONS[mode] || STARTER_QUESTIONS.developer);
 
     var drawer = document.createElement("aside");
     drawer.className = "ruby-sage-drawer";
@@ -76,7 +92,7 @@
       starters.style.display = "";
     });
 
-    STARTER_QUESTIONS.forEach(function(question) {
+    starterQuestions.forEach(function(question) {
       var chip = document.createElement("button");
       chip.type = "button";
       chip.className = "ruby-sage-starter";

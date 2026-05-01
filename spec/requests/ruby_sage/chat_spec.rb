@@ -90,6 +90,54 @@ RSpec.describe "RubySage chat", type: :request do
     expect(response).to have_http_status(:bad_gateway)
   end
 
+  context "with mode: :developer (default)" do
+    it "sends the developer system prompt to the provider" do
+      allow_access
+      seed_completed_scan
+      provider = stub_provider(provider_response)
+
+      post "/ruby_sage/chat", params: { message: "posts" }, as: :json
+
+      expect(provider).to have_received(:chat) do |kwargs|
+        expect(kwargs[:system_prompt]).to include("source code")
+      end
+    end
+  end
+
+  context "with mode: :admin" do
+    it "sends the admin system prompt to the provider" do
+      RubySage.configure do |c|
+        c.auth_check = ->(_) { true }
+        c.mode = :admin
+      end
+      seed_completed_scan
+      provider = stub_provider(provider_response)
+
+      post "/ruby_sage/chat", params: { message: "billing" }, as: :json
+
+      expect(provider).to have_received(:chat) do |kwargs|
+        expect(kwargs[:system_prompt]).to include("workflows")
+      end
+    end
+  end
+
+  context "with mode: :user" do
+    it "sends the user system prompt to the provider" do
+      RubySage.configure do |c|
+        c.auth_check = ->(_) { true }
+        c.mode = :user
+      end
+      seed_completed_scan
+      provider = stub_provider(provider_response)
+
+      post "/ruby_sage/chat", params: { message: "how do I login?" }, as: :json
+
+      expect(provider).to have_received(:chat) do |kwargs|
+        expect(kwargs[:system_prompt]).to include("plain language")
+      end
+    end
+  end
+
   def allow_access
     RubySage.configure { |config| config.auth_check = ->(_controller) { true } }
   end
