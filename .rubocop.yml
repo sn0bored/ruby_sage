@@ -1,0 +1,30 @@
+require:
+  - rubocop-rails
+  - rubocop-rspec
+
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 3.1
+  SuggestExtensions: false
+  Exclude:
+    - "spec/dummy/db/schema.rb"
+    - "spec/dummy/bin/**/*"
+    - "vendor/**/*"
+    - "bin/**/*"
+
+Style/Documentation:
+  Enabled: false
+
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+Lint/EmptyBlock:
+  Exclude:
+    - "config/routes.rb"
+
+Rails/RakeEnvironment:
+  Exclude:
+    - "lib/tasks/ruby_sage_tasks.rake"
+
+RSpec/ExampleLength:
+  Max: 8
