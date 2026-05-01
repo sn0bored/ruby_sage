@@ -169,6 +169,33 @@ curl -X POST https://your-app.com/ruby_sage/internal/retrieve \
 
 A typical Cursor / Claude Code session can spend 50–200K input tokens orienting the model to a Rails codebase before any real work happens. Swap that for a 3K-token retrieval call and your dev token bill drops by an order of magnitude.
 
+### Generate onboarding docs
+
+```bash
+bundle exec rake ruby_sage:onboard
+```
+
+Writes two files based on the latest scan:
+
+- `docs/ONBOARDING.md` — for human developers joining the team. Tech stack, data model, key workflows, where to start reading, gotchas.
+- `docs/AGENT_PRIMER.md` — for AI coding agents. App in one sentence, stack, domain model, service layer, patterns to follow / what NOT to do. Kept under 600 words so it fits any agent's context prefix.
+
+A new developer or AI agent runs this once and has structured context in under a minute.
+
+### CLI chat
+
+```bash
+bundle exec rake "ruby_sage:ask[how does authentication work?]"
+# or
+QUERY="how does authentication work?" bundle exec rake ruby_sage:ask
+```
+
+Prints the answer + source file citations to STDOUT. Useful for shell-based AI agents that need a quick lookup without opening a browser.
+
+## Admin dashboard
+
+Visit `/ruby_sage/admin/scans` for scan history, artifact counts by kind, and a "Scan now" button. Visit `/ruby_sage/admin/artifacts` to browse the indexed file list with summaries and public symbols. Both go through the same auth gate as the chat endpoint.
+
 ## Configuration reference
 
 ```ruby
