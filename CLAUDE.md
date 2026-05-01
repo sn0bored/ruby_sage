@@ -21,6 +21,25 @@ We are building this as if it could be merged into Rails core. That means:
 - RuboCop clean and RSpec green are **gates**, not aspirations. CI must be green before declaring a phase done.
 - If a method needs a comment to explain WHAT it does, rename or refactor it. Comments explain WHY.
 
+## Compatibility & portability
+
+This gem supports **Rails 5.2+ / Ruby 2.7+**. That's a deliberate choice: host apps shouldn't have to upgrade just to adopt RubySage. To honor it, gem code must stay portable:
+
+- No `Data.define`, no shorthand hash-key punning (`{ x:, y: }`), no rightward assignment, no anonymous block forwarding (`&`).
+- Explicit `**kwargs` everywhere — Ruby 2.7 → 3.0 separated kwargs from positional, and we run on both sides of that boundary.
+- No Rails-7-only idioms (`enum :status, [...]` symbol-first form is out — use `enum status: { ... }`).
+- No Zeitwerk-only autoload assumptions; classic loader must also work.
+- Asset pipeline: Sprockets-only for V1.
+
+When in doubt, write code that would work in Ruby 2.7 / Rails 5.2 — every newer Ruby/Rails accepts it too.
+
+## Streaming-ready (don't implement, but don't preclude)
+
+Streaming responses are deferred to v1.5. V1 must not paint us into a corner:
+- Provider `chat` method accepts an optional block (ignored in V1, used in v1.5 for incremental yield).
+- Chat controller returns JSON in V1 with a shape that's swap-compatible with SSE later.
+- Widget JS consumes a single response in V1; v1.5 swaps it to an event stream without redesigning the UI.
+
 ## Hard rules
 
 - **Public repo, zero data leakage.** No proprietary code, schemas, env values, or fixtures from any other Lanier/TYB/PollyStop/Changemaker app may land in this repo.

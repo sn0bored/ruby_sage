@@ -1,5 +1,27 @@
 # RubySage — Architecture & Build Plan
 
+## Compatibility
+
+- **Ruby**: 2.7+. We deliberately support legacy Ruby so host apps don't have to upgrade before adopting RubySage. Code stays portable to 2.7.
+- **Rails**: 5.2+. Engine, ActiveRecord, ActionController primitives we use have been stable since 5.2.
+- **Asset pipeline**: Sprockets-only for V1. Propshaft compatibility deferred to v1.5.
+
+Portability constraints for gem code:
+- No `Data.define`, no shorthand hash-key punning (`{ x:, y: }`), no rightward assignment (`expr => var`), no anonymous block forwarding (`&`).
+- Be explicit about kwargs at the Ruby 2.7 → 3.0 boundary. Use `**kwargs` consistently.
+- No Rails-7-only idioms (e.g., `enum :status, [...]` symbol-first form). Use `enum status: { ... }` instead.
+- No Zeitwerk-only autoload assumptions. Code should also work under classic loader (Rails 5.2 / 6.0 default).
+
+CI verifies cross-version compatibility via a matrix in `.github/workflows/ci.yml`.
+
+## Streaming-ready architecture (V1, not yet streaming)
+
+Streaming responses (SSE) are deferred to v1.5, but the V1 architecture is shaped so we don't pay a rewrite tax later:
+
+- **Provider interface**: `chat` accepts an optional block. V1 ignores the block and returns the full response. V1.5 implementations can yield chunks to the block while still buffering for the return value.
+- **Chat controller**: V1 returns a single JSON response. The endpoint contract uses a response shape (`{ answer, citations, usage }`) compatible with progressive rendering — V1.5 swaps to an SSE response without changing the URL.
+- **Widget JS**: V1 consumes the JSON response in one shot. V1.5 swaps to consuming an event stream — incremental token append is a small client-side change, not a UI rewrite.
+
 ## Quality bar
 
 This gem aspires to Rails-core acceptability. Concretely:
