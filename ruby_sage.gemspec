@@ -17,7 +17,6 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = ">= 3.1"
 
   spec.metadata = {
-    "homepage_uri" => spec.homepage,
     "source_code_uri" => "https://github.com/sn0bored/ruby_sage",
     "changelog_uri" => "https://github.com/sn0bored/ruby_sage/blob/main/CHANGELOG.md",
     "rubygems_mfa_required" => "true"
@@ -31,5 +30,5 @@ Gem::Specification.new do |spec|
   end
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "rails", ">= 7.0"
+  spec.add_dependency "rails", ">= 7.0", "< 9.0"
 end
