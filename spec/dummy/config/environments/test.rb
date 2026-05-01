@@ -12,3 +12,7 @@ Rails.application.configure do
   config.active_support.disallowed_deprecation = :raise
   config.active_support.disallowed_deprecation_warnings = []
 end
+
+RubySage.configure do |config|
+  config.scope = :public_rate_limited
+end
