@@ -10,6 +10,8 @@ require "ruby_sage/secret_redactor"
 require "ruby_sage/summarizer"
 require "ruby_sage/scanner"
 require "ruby_sage/retriever"
+require "ruby_sage/onboarding_generator"
+require "ruby_sage/cli_chat"
 
 # RubySage exposes a Rails engine for scanning a host application and serving
 # code-aware assistance.

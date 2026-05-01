@@ -34,6 +34,13 @@
     });
   }
 
+  var STARTER_QUESTIONS = [
+    "What are the main models and how do they relate?",
+    "How does authentication work?",
+    "Walk me through the main user workflow.",
+    "What background jobs are there and what do they do?"
+  ];
+
   function createDrawer(mountPath) {
     var history = [];  // conversation history for this drawer instance
 
@@ -45,13 +52,16 @@
         '<button type="button" class="ruby-sage-clear" aria-label="Clear conversation" title="Clear conversation">&#8635;</button>' +
         '<button type="button" class="ruby-sage-close" aria-label="Close">&#x2715;</button>' +
       "</header>" +
-      '<div class="ruby-sage-thread" role="log" aria-live="polite"></div>' +
+      '<div class="ruby-sage-thread" role="log" aria-live="polite">' +
+        '<div class="ruby-sage-starters" aria-label="Suggested questions"></div>' +
+      "</div>" +
       '<form class="ruby-sage-form">' +
         '<input class="ruby-sage-input" type="text" placeholder="Ask about this page or your whole codebase..." autocomplete="off" />' +
         '<button type="submit" class="ruby-sage-submit">Send</button>' +
       "</form>";
 
     var thread = drawer.querySelector(".ruby-sage-thread");
+    var starters = drawer.querySelector(".ruby-sage-starters");
     var form = drawer.querySelector(".ruby-sage-form");
     var input = drawer.querySelector(".ruby-sage-input");
 
@@ -62,6 +72,21 @@
     drawer.querySelector(".ruby-sage-clear").addEventListener("click", function() {
       history = [];
       thread.innerHTML = "";
+      thread.appendChild(starters);
+      starters.style.display = "";
+    });
+
+    STARTER_QUESTIONS.forEach(function(question) {
+      var chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "ruby-sage-starter";
+      chip.textContent = question;
+      chip.addEventListener("click", function() {
+        starters.style.display = "none";
+        input.value = question;
+        form.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
+      });
+      starters.appendChild(chip);
     });
 
     form.addEventListener("submit", function(event) {
@@ -69,6 +94,7 @@
       var message = (input.value || "").trim();
       if (!message) return;
       input.value = "";
+      starters.style.display = "none";
 
       history.push({ role: "user", content: message });
       appendMessage(thread, "user", message);

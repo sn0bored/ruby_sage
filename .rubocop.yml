@@ -54,10 +54,28 @@ RSpec/DescribeClass:
     - "spec/lib/tasks/**/*_spec.rb"
 
 Metrics/MethodLength:
+  Max: 15
   Exclude:
     - "db/migrate/*.rb"
+    - "spec/**/*_spec.rb"
+    - "lib/ruby_sage/cli_chat.rb"
+
+Metrics/AbcSize:
+  Max: 25
+  Exclude:
+    - "lib/ruby_sage/cli_chat.rb"
 
 Metrics/BlockLength:
   Exclude:
     - "lib/tasks/**/*.rake"
     - "spec/**/*_spec.rb"
+
+# CLI-style code intentionally writes to stdout and exits on fatal errors.
+Rails/Output:
+  Exclude:
+    - "lib/ruby_sage/cli_chat.rb"
+
+Rails/Exit:
+  Exclude:
+    - "lib/ruby_sage/cli_chat.rb"
+    - "lib/tasks/**/*.rake"
