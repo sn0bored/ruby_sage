@@ -13,7 +13,10 @@ RSpec.describe RubySage::Summarizer do
     expect(summary).to be_nil
   end
 
-  it "returns nil when the provider is not implemented" do
+  it "returns nil when the provider fails" do
+    provider = instance_double(RubySage::Providers::Base)
+    allow(provider).to receive(:chat).and_raise(RubySage::Providers::ProviderError, "upstream failed")
+    allow(RubySage).to receive(:provider).and_return(provider)
     RubySage.configure { |config| config.api_key = "test-key" }
 
     summary = described_class.new.summarize(contents: "class Post; end", path: "app/models/post.rb")

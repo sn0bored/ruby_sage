@@ -17,4 +17,5 @@ group :development, :test do
   gem "rubocop-rails"
   gem "rubocop-rspec"
   gem "sqlite3"
+  gem "webmock"
 end
