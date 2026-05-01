@@ -3,8 +3,8 @@
 module RubySage
   # Strips secret values while preserving key names and ENV references.
   class SecretRedactor
-    SECRET_KEY_PATTERN = /(api_key|secret|password|token|access[_-]?key|private[_-]?key|client[_-]?secret)/i
-    YAML_VALUE_LINE = /\A(\s*[\w-]+):\s*(['"]?)(.*?)\2\s*\z/
+    SECRET_KEY_PATTERN = /(api_key|secret|password|token|access[_-]?key|private[_-]?key|client[_-]?secret)/i.freeze
+    YAML_VALUE_LINE = /\A(\s*[\w-]+):\s*(['"]?)(.*?)\2\s*\z/.freeze
 
     # Initializes a redactor for one file's contents.
     #

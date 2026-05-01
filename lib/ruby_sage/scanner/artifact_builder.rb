@@ -29,7 +29,7 @@ module RubySage
           (?:class|module)\s+(?<constant>[A-Z]\w*(?:::[A-Z]\w*)*) |
           def\s+(?:self\.)?(?<method>[a-zA-Z_]\w*[!?=]?)
         )
-      /x
+      /x.freeze
 
       # Initializes a builder for paths under one host root.
       #

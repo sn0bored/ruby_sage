@@ -14,7 +14,7 @@ Gem::Specification.new do |spec|
                      "floating chat widget that answers questions with citations."
   spec.homepage = "https://github.com/sn0bored/ruby_sage"
   spec.license = "MIT"
-  spec.required_ruby_version = ">= 3.1"
+  spec.required_ruby_version = ">= 2.7"
 
   spec.metadata = {
     "source_code_uri" => "https://github.com/sn0bored/ruby_sage",
@@ -30,5 +30,5 @@ Gem::Specification.new do |spec|
   end
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "rails", ">= 7.0", "< 9.0"
+  spec.add_dependency "rails", ">= 5.2", "< 9.0"
 end
