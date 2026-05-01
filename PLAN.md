@@ -53,7 +53,7 @@ A Rails engine, distributed as the `ruby_sage` gem, that:
 - **Page context resolves server-side.** Widget passes URL → server resolves to route → controller#action → injects the relevant artifacts into the user message.
 - **Server-side auth enforcement.** `before_action` in the controller, not just a widget render check.
 - **Public, no-data-leak.** This is an OSS gem under `sn0bored/ruby_sage`. The dummy host app for tests is 100% synthetic. Zero proprietary code, schemas, or env values may land in this repo.
-- **Gem only.** Host-app integration (e.g., wiring into Changemaker) lives in those host repos on their own branches, never here.
+- **Gem only.** Host-app integration lives in the host repo on its own branch, never here.
 
 ## Components
 

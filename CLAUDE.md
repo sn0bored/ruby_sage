@@ -42,12 +42,12 @@ Streaming responses are deferred to v1.5. V1 must not paint us into a corner:
 
 ## Hard rules
 
-- **Public repo, zero data leakage.** No proprietary code, schemas, env values, or fixtures from any other Lanier/TYB/PollyStop/Changemaker app may land in this repo.
+- **Public repo, zero data leakage.** No proprietary code, schemas, env values, or fixtures from any other application may land in this repo.
 - **`spec/dummy/` is 100% synthetic.** It exists to exercise the engine. No copy-paste from any real app.
-- **Gem only.** This repo contains the engine + tests + dummy app + docs. No host-app integration code. Wiring into Changemaker (or any other host) happens in those repos on their own branches.
-- **Feature branches only.** Coda never commits to `main`. All work lands on `coda/<descriptor>` branches and goes through review.
-- **Tests gate every phase.** Each build phase ends with a passing suite and green CI.
-- **No secrets.** Don't commit `.env`, credentials, API keys. The `Anthropic API key` and `OpenAI API key` are read from env at runtime by the host app.
+- **Gem only.** This repo contains the engine + tests + dummy app + docs. No host-app integration code. Wiring RubySage into a host application happens in that host's own repo, on its own branch.
+- **Feature branches only.** Contributors should never commit directly to `main`. Work lands on feature branches and goes through review.
+- **Tests gate every release.** Every release ships with a passing suite and green CI.
+- **No secrets.** Don't commit `.env`, credentials, API keys. Provider API keys are read from env at runtime by the host app.
 
 ## Style
 
