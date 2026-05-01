@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RubySage — Codebase Index</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: #f5f5f5; color: #111; }
+    .rs-admin-header { background: #1a1a1a; color: #fff; padding: 16px 24px; display: flex; align-items: center; gap: 12px; }
+    .rs-admin-header h1 { font-size: 18px; font-weight: 600; }
+    .rs-admin-header .rs-admin-badge { font-size: 11px; background: #444; padding: 2px 8px; border-radius: 12px; }
+    .rs-admin-body { max-width: 900px; margin: 32px auto; padding: 0 16px; }
+    .rs-admin-notice { background: #d1fae5; border: 1px solid #6ee7b7; border-radius: 6px; padding: 10px 16px; margin-bottom: 20px; font-size: 14px; color: #065f46; }
+    .rs-admin-card { background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+    .rs-admin-card h2 { font-size: 14px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 16px; }
+    .rs-admin-stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; }
+    .rs-admin-stat { background: #f9f9f9; border: 1px solid #eee; border-radius: 6px; padding: 12px; text-align: center; }
+    .rs-admin-stat-value { font-size: 28px; font-weight: 700; line-height: 1; }
+    .rs-admin-stat-label { font-size: 12px; color: #888; margin-top: 4px; text-transform: capitalize; }
+    .rs-admin-actions { margin-bottom: 20px; }
+    .rs-admin-btn { display: inline-block; padding: 8px 18px; background: #1a1a1a; color: #fff; border: 0; border-radius: 6px; font-size: 14px; cursor: pointer; text-decoration: none; }
+    .rs-admin-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .rs-admin-btn-sm { background: transparent; color: #555; border: 1px solid #ddd; font-size: 12px; padding: 4px 10px; }
+    .rs-admin-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .rs-admin-table th { text-align: left; font-size: 12px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 8px; border-bottom: 1px solid #eee; }
+    .rs-admin-table td { padding: 10px 8px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+    .rs-admin-table tr:last-child td { border-bottom: 0; }
+    .rs-badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    .rs-badge-completed { background: #d1fae5; color: #065f46; }
+    .rs-badge-running  { background: #fef3c7; color: #92400e; }
+    .rs-badge-failed   { background: #fee2e2; color: #991b1b; }
+    .rs-badge-pending  { background: #f1f5f9; color: #475569; }
+    .rs-admin-empty { text-align: center; color: #888; padding: 32px; font-size: 14px; }
+  </style>
+</head>
+<body>
+
+<header class="rs-admin-header">
+  <h1>RubySage</h1>
+  <span class="rs-admin-badge">Codebase Index</span>
+</header>
+
+<div class="rs-admin-body">
+
+  <% if notice.present? %>
+    <div class="rs-admin-notice"><%= notice %></div>
+  <% end %>
+
+  <div class="rs-admin-actions">
+    <%= form_with url: ruby_sage.admin_scans_path, method: :post, local: true do %>
+      <%= submit_tag @running ? "Scan in progress..." : "Scan now",
+            class: "rs-admin-btn",
+            disabled: @running %>
+    <% end %>
+  </div>
+
+  <% if @latest %>
+    <div class="rs-admin-card">
+      <h2>Indexed files — <%= @latest.file_count %> total</h2>
+      <div class="rs-admin-stat-grid">
+        <% @artifact_counts.sort.each do |kind, count| %>
+          <div class="rs-admin-stat">
+            <div class="rs-admin-stat-value"><%= count %></div>
+            <div class="rs-admin-stat-label"><%= kind || "other" %></div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="rs-admin-card">
+    <h2>Scan history</h2>
+    <% if @scans.empty? %>
+      <p class="rs-admin-empty">No scans yet. Run <code>bundle exec rake ruby_sage:scan</code> or click "Scan now" above.</p>
+    <% else %>
+      <table class="rs-admin-table">
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Files</th>
+            <th>Ruby</th>
+            <th>Rails</th>
+            <th>Git SHA</th>
+            <th>Started</th>
+            <th>Duration</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @scans.each do |scan| %>
+            <tr>
+              <td><span class="rs-badge rs-badge-<%= scan.status %>"><%= scan.status %></span></td>
+              <td><%= scan.file_count || "—" %></td>
+              <td><%= scan.ruby_version || "—" %></td>
+              <td><%= scan.rails_version || "—" %></td>
+              <td><code><%= scan.git_sha&.first(7) || "—" %></code></td>
+              <td><%= scan.started_at ? scan.started_at.strftime("%b %-d %H:%M") : "—" %></td>
+              <td>
+                <% if scan.started_at && scan.finished_at %>
+                  <%= ((scan.finished_at - scan.started_at).round).then { |s| s < 60 ? "#{s}s" : "#{s / 60}m #{s % 60}s" } %>
+                <% else %>
+                  —
+                <% end %>
+              </td>
+            </tr>
+            <% if scan.errors_log.present? %>
+              <tr>
+                <td colspan="7" style="font-size:12px;color:#991b1b;padding:4px 8px 10px;">
+                  <strong>Error:</strong> <%= scan.errors_log.lines.first&.strip %>
+                </td>
+              </tr>
+            <% end %>
+          <% end %>
+        </tbody>
+      </table>
+    <% end %>
+  </div>
+
+</div>
+</body>
+</html>
