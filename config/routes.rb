@@ -3,6 +3,8 @@
 RubySage::Engine.routes.draw do
   get "/health", to: "health#show"
 
+  post "/chat", to: "chat#create"
+
   scope :internal do
     post "/retrieve", to: "internal/retrieve#create"
   end
