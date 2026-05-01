@@ -1,0 +1,9 @@
+<%
+  # Mount path the JS uses to call the chat endpoint.
+  mount_path = main_app.respond_to?(:ruby_sage_path) ? main_app.ruby_sage_path : "/ruby_sage"
+  nonce = ruby_sage_csp_nonce
+%>
+<div id="ruby-sage-root" data-mount="<%= mount_path %>"></div>
+
+<%= stylesheet_link_tag "ruby_sage/widget", media: "all", "data-turbo-track": "reload" %>
+<%= javascript_include_tag "ruby_sage/widget", nonce: nonce, "data-turbo-track": "reload", defer: true %>
