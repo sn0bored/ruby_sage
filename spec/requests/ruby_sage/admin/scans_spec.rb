@@ -53,9 +53,9 @@ RSpec.describe "RubySage admin scans", type: :request do
       allow_access
       scan = RubySage::Scan.create!(status: "completed", finished_at: Time.current, file_count: 2)
       RubySage::Artifact.create!(scan: scan, path: "app/models/post.rb", kind: "model",
-                                  digest: "aaa", summary: "Post model")
+                                 digest: "aaa", summary: "Post model")
       RubySage::Artifact.create!(scan: scan, path: "app/controllers/posts_controller.rb",
-                                  kind: "controller", digest: "bbb", summary: "Posts controller")
+                                 kind: "controller", digest: "bbb", summary: "Posts controller")
 
       get "/ruby_sage/admin/scans"
 

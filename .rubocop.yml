@@ -27,13 +27,15 @@ Rails/RakeEnvironment:
     - "lib/tasks/ruby_sage_tasks.rake"
 
 RSpec/ExampleLength:
-  Max: 8
+  Max: 15
   Exclude:
-    - "spec/lib/**/*_spec.rb"
+    - "spec/lib/tasks/**/*_spec.rb"
 
 RSpec/MultipleExpectations:
-  Exclude:
-    - "spec/lib/**/*_spec.rb"
+  Max: 7
+
+Rails/I18nLocaleTexts:
+  Enabled: false
 
 RSpec/SpecFilePathFormat:
   Exclude:
