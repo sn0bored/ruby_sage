@@ -28,3 +28,7 @@ Rails/RakeEnvironment:
 
 RSpec/ExampleLength:
   Max: 8
+
+Metrics/MethodLength:
+  Exclude:
+    - "db/migrate/*.rb"
