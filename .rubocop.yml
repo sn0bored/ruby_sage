@@ -28,7 +28,34 @@ Rails/RakeEnvironment:
 
 RSpec/ExampleLength:
   Max: 8
+  Exclude:
+    - "spec/lib/**/*_spec.rb"
+
+RSpec/MultipleExpectations:
+  Exclude:
+    - "spec/lib/**/*_spec.rb"
+
+RSpec/SpecFilePathFormat:
+  Exclude:
+    - "spec/lib/**/*_spec.rb"
+
+RSpec/LeakyLocalVariable:
+  Exclude:
+    - "spec/lib/**/*_spec.rb"
+
+RSpec/AnyInstance:
+  Exclude:
+    - "spec/lib/**/*_spec.rb"
+
+RSpec/DescribeClass:
+  Exclude:
+    - "spec/lib/tasks/**/*_spec.rb"
 
 Metrics/MethodLength:
   Exclude:
     - "db/migrate/*.rb"
+
+Metrics/BlockLength:
+  Exclude:
+    - "lib/tasks/**/*.rake"
+    - "spec/**/*_spec.rb"
