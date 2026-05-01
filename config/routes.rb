@@ -7,6 +7,7 @@ RubySage::Engine.routes.draw do
 
   namespace :admin do
     resources :scans, only: %i[index create]
+    resources :artifacts, only: %i[index]
   end
 
   scope :internal do

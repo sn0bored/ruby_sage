@@ -36,6 +36,21 @@ namespace :ruby_sage do
     puts JSON.pretty_generate(payload)
   end
 
+  desc "Generate ONBOARDING.md and AGENT_PRIMER.md from the latest scan."
+  task onboard: :environment do
+    result = RubySage::OnboardingGenerator.new.run
+    puts "Wrote #{result[:onboarding_path]}"
+    puts "Wrote #{result[:primer_path]}"
+  end
+
+  desc "Ask a question against the knowledge base and print the answer. Usage: rake 'ruby_sage:ask[your question here]'"
+  task :ask, [:query] => :environment do |_task, args|
+    query = args[:query] || ENV.fetch("QUERY", nil)
+    abort "Usage: rake 'ruby_sage:ask[your question]'  or  QUERY='...' rake ruby_sage:ask" if query.to_s.strip.empty?
+
+    RubySage::CliChat.new.run(query)
+  end
+
   desc "Import a previously-exported scan from STDIN as a new completed Scan."
   task import_artifacts: :environment do
     payload = JSON.parse($stdin.read)
