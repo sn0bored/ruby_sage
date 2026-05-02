@@ -4,6 +4,7 @@
 
 ### Added
 
+- **`rake ruby_sage:doctor`** — diagnostic task that checks common install problems (provider/api_key, auth_check, scans present + recent, audience tagging coverage, `:user`-mode safety, `:admin` DB query safety, chat_turns table) and reports findings with actionable fixes. Exits non-zero on any error so it slots cleanly into a CI smoke test after a deploy. Format: `✓ check_name  message  ↳ fix`.
 - **USD cost calculator.** New `RubySage::CostCalculator` ships pricing tables for current Anthropic + OpenAI models (Opus 4.7, Sonnet 4.6, Haiku 4.5, GPT-4.1, GPT-4.1 mini), accounts for cache-read and cache-write discounts separately. `ChatTurn#cost_usd` exposes the per-turn cost and the admin views show both per-turn and last-30-days aggregate spend in USD. `config.model_pricing` accepts host overrides — add a custom model or update prices without waiting for a gem release.
 - `ChatTurn#model` column captures which provider model handled the turn (so cost calculation works on historical rows even after `config.model` changes).
 - **Chat turn audit + usage persistence.** Every chat-widget exchange now writes a `RubySage::ChatTurn` row capturing question, answer, mode, tool calls (including the SQL the model ran in `:admin` mode), citations, token usage, and asker identity (when `config.identify_asker` is set). Powers the new admin audit dashboard at `/ruby_sage/admin/chat_turns` and is the data backbone for the future SaaS usage metering. Per-turn writes are wrapped in begin/rescue so persistence failures never break a chat response.
