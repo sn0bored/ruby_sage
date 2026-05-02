@@ -51,6 +51,18 @@ RubySage.configure do |config|
   #   end
   # }
 
+  # === Model pricing (USD per million tokens) ===
+  # The gem ships pricing for current Anthropic + OpenAI models. Override
+  # or add a custom model here without waiting for a gem release.
+  # config.model_pricing = {
+  #   "my-fine-tune" => {
+  #     input_per_million: 2.5,
+  #     output_per_million: 10.0,
+  #     cache_read_per_million: 0.25,
+  #     cache_write_per_million: 3.0
+  #   }
+  # }
+
   # === Chat turn audit + usage tracking ===
   # When true (default), every chat-widget turn writes a RubySage::ChatTurn
   # row with the question, answer, mode, tool calls (incl. SQL the model ran

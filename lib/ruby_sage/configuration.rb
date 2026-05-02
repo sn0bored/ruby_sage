@@ -102,6 +102,10 @@ module RubySage
     #   @return [Proc, nil] callable receiving the controller and returning the
     #     ActiveRecord object that asked the question (e.g. +current_user+) for
     #     the +ChatTurn#asker+ polymorphic reference. Optional.
+    # @!attribute [rw] model_pricing
+    #   @return [Hash{String => Hash}] per-model USD pricing overrides merged
+    #     into +RubySage::CostCalculator::DEFAULT_PRICING+. Use this to add a
+    #     custom model or update prices without waiting for a gem release.
     attr_accessor :provider, :api_key, :model, :summarization_model,
                   :auth_check, :scope, :mode, :scan_retention,
                   :scanner_include, :scanner_exclude,
@@ -109,7 +113,7 @@ module RubySage
                   :audience_for, :user_facing_paths,
                   :enable_database_queries, :query_scope, :query_connection,
                   :max_query_rows, :query_timeout_ms, :tool_loop_max_iterations,
-                  :persist_chat_turns, :identify_asker
+                  :persist_chat_turns, :identify_asker, :model_pricing
 
     # Builds a configuration object with conservative defaults.
     #
@@ -153,6 +157,7 @@ module RubySage
       @tool_loop_max_iterations = 5
       @persist_chat_turns = true
       @identify_asker = nil
+      @model_pricing = {}
     end
 
     def default_scanner_include
