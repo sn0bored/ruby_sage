@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RubySage — Chat Turn #<%= @turn.id %></title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: #f5f5f5; color: #111; }
+    .rs-admin-header { background: #1a1a1a; color: #fff; padding: 16px 24px; display: flex; align-items: center; gap: 12px; }
+    .rs-admin-header h1 { font-size: 18px; font-weight: 600; }
+    .rs-admin-body { max-width: 900px; margin: 32px auto; padding: 0 16px; }
+    .rs-admin-card { background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+    .rs-admin-card h2 { font-size: 13px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
+    .rs-admin-meta { font-size: 13px; color: #666; }
+    .rs-admin-meta div { margin-bottom: 4px; }
+    .rs-question { font-size: 16px; line-height: 1.5; padding: 12px; background: #f9f9f9; border-radius: 6px; }
+    .rs-answer { font-size: 14px; line-height: 1.6; white-space: pre-wrap; }
+    .rs-tool-call { background: #faf5ff; border: 1px solid #e9d5ff; border-radius: 6px; padding: 10px 12px; margin-bottom: 8px; font-family: ui-monospace, "SF Mono", monospace; font-size: 12px; }
+    .rs-tool-call .rs-tool-name { font-weight: 600; color: #6b21a8; }
+    .rs-tool-call pre { white-space: pre-wrap; word-break: break-all; margin-top: 6px; color: #444; }
+    .rs-citation { font-size: 13px; padding: 6px 10px; border-bottom: 1px solid #f0f0f0; }
+    .rs-citation:last-child { border-bottom: 0; }
+    .rs-back { display: inline-block; margin-bottom: 16px; font-size: 13px; color: #555; text-decoration: none; }
+    .rs-error { background: #fee2e2; border: 1px solid #fca5a5; border-radius: 6px; padding: 10px; color: #991b1b; font-size: 13px; }
+  </style>
+</head>
+<body>
+
+<header class="rs-admin-header">
+  <h1>RubySage — Chat Turn #<%= @turn.id %></h1>
+</header>
+
+<div class="rs-admin-body">
+
+  <%= link_to "← back to list", ruby_sage.admin_chat_turns_path, class: "rs-back" %>
+
+  <div class="rs-admin-card">
+    <h2>Metadata</h2>
+    <div class="rs-admin-meta">
+      <div><strong>When:</strong> <%= @turn.created_at.iso8601 %></div>
+      <div><strong>Mode:</strong> <%= @turn.mode %></div>
+      <div><strong>Status:</strong> <%= @turn.status %></div>
+      <div><strong>Scan:</strong> <%= @turn.scan_id ? "##{@turn.scan_id}" : "—" %></div>
+      <div><strong>Asker:</strong> <%= @turn.asker_type ? "#{@turn.asker_type} ##{@turn.asker_id}" : "—" %></div>
+      <div><strong>Iterations:</strong> <%= @turn.iterations || "—" %></div>
+      <div><strong>Tokens:</strong> input <%= @turn.input_tokens || 0 %>, output <%= @turn.output_tokens || 0 %>, cache read <%= @turn.cache_read_tokens || 0 %>, cache create <%= @turn.cache_creation_tokens || 0 %></div>
+    </div>
+  </div>
+
+  <div class="rs-admin-card">
+    <h2>Question</h2>
+    <div class="rs-question"><%= @turn.question %></div>
+  </div>
+
+  <% if @turn.error_message.present? %>
+    <div class="rs-admin-card">
+      <h2>Error</h2>
+      <div class="rs-error"><%= @turn.error_message %></div>
+    </div>
+  <% end %>
+
+  <% if @turn.answer.present? %>
+    <div class="rs-admin-card">
+      <h2>Answer</h2>
+      <div class="rs-answer"><%= @turn.answer %></div>
+    </div>
+  <% end %>
+
+  <% if @turn.used_tools? %>
+    <div class="rs-admin-card">
+      <h2>Tool calls (<%= Array(@turn.tool_calls).size %>)</h2>
+      <% Array(@turn.tool_calls).each do |call| %>
+        <div class="rs-tool-call">
+          <span class="rs-tool-name"><%= call["name"] || call[:name] %></span>
+          <pre><%= JSON.pretty_generate(call["input"] || call[:input] || {}) %></pre>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if Array(@turn.citations).any? %>
+    <div class="rs-admin-card">
+      <h2>Citations (<%= Array(@turn.citations).size %>)</h2>
+      <% Array(@turn.citations).each do |citation| %>
+        <div class="rs-citation">
+          <code><%= citation["path"] || citation[:path] %></code>
+          <span style="color:#888;font-size:12px;">— <%= citation["kind"] || citation[:kind] %>, score <%= citation["score"] || citation[:score] %></span>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+</div>
+</body>
+</html>

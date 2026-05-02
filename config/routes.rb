@@ -8,6 +8,7 @@ RubySage::Engine.routes.draw do
   namespace :admin do
     resources :scans, only: %i[index create]
     resources :artifacts, only: %i[index]
+    resources :chat_turns, only: %i[index show]
   end
 
   scope :internal do
