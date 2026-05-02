@@ -21,6 +21,20 @@ module RubySage
 
     serialize_json :public_symbols
     serialize_json :route_mappings
+    serialize_json :audiences
+
+    # Returns true when this artifact should be visible in the given mode.
+    # Artifacts created before audience tagging (no audiences set) are visible
+    # in every mode for backwards compatibility.
+    #
+    # @param mode [Symbol, String]
+    # @return [Boolean]
+    def visible_in_mode?(mode)
+      list = Array(audiences).compact
+      return true if list.empty?
+
+      list.map(&:to_s).include?(mode.to_s)
+    end
 
     scope :of_kind, ->(kind) { where(kind: kind) }
   end

@@ -22,10 +22,14 @@ module RubySage
     #
     # @param scan [RubySage::Scan, nil] scan to retrieve from.
     # @param limit [Integer] maximum number of artifacts to return.
+    # @param mode [Symbol, nil] audience mode (+:developer+, +:admin+, +:user+).
+    #   Defaults to the configured RubySage mode. Artifacts whose audience list
+    #   does not include this mode are excluded.
     # @return [RubySage::Retriever]
-    def initialize(scan: Scan.latest_completed.first, limit: DEFAULT_LIMIT)
+    def initialize(scan: Scan.latest_completed.first, limit: DEFAULT_LIMIT, mode: nil)
       @scan = scan
       @limit = limit
+      @mode = (mode || RubySage.configuration.mode || :developer).to_sym
     end
 
     # Retrieves relevant artifacts and citations.
@@ -57,8 +61,9 @@ module RubySage
 
     def score(tokens:, route_artifact_ids:)
       route_ids = Set.new(route_artifact_ids)
+      candidates = @scan.artifacts.to_a.select { |artifact| artifact.visible_in_mode?(@mode) }
 
-      scored = @scan.artifacts.to_a.each_with_object([]) do |artifact, scored_artifacts|
+      scored = candidates.each_with_object([]) do |artifact, scored_artifacts|
         artifact_score = score_artifact(artifact, tokens)
         artifact_score *= PAGE_CONTEXT_BOOST if route_ids.include?(artifact.id)
 

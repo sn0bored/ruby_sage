@@ -33,9 +33,18 @@ RSpec.describe RubySage::Prompts do
       expect(described_class::ADMIN).to include("workflows")
     end
 
-    it "user prompt avoids technical jargon guidance" do
+    it "user prompt forbids leaking implementation details" do
       expect(described_class::USER).to include("plain language")
-      expect(described_class::USER).to include("no jargon")
+      expect(described_class::USER).to include("Never describe internal architecture")
+      expect(described_class::USER).to include("file paths")
+      expect(described_class::USER).to include("class or module names")
+    end
+
+    it "user prompt gives the model a fixed refusal sentence for how-it-works questions" do
+      collapsed = described_class::USER.gsub(/\s+/, " ")
+      expect(collapsed).to include(
+        'respond exactly: "I can help with how to use the app, but I don\'t have details about how it is built."'
+      )
     end
   end
 end

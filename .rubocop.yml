@@ -65,6 +65,11 @@ Metrics/AbcSize:
   Exclude:
     - "lib/ruby_sage/cli_chat.rb"
 
+# Heredoc-heavy renderer; class length is mostly markdown content, not behavior.
+Metrics/ClassLength:
+  Exclude:
+    - "lib/ruby_sage/agent_scan/instructions.rb"
+
 Metrics/BlockLength:
   Exclude:
     - "lib/tasks/**/*.rake"
