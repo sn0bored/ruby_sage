@@ -26,6 +26,31 @@ RubySage.configure do |config|
   # nonce so RubySage can attach it to the widget's <script> tag.
   # config.csp_nonce = ->(controller) { controller.content_security_policy_nonce }
 
+  # === Mode ===
+  # Shapes the system prompt AND filters which artifacts are visible to the
+  # widget. Three audiences:
+  #   :developer — code/architecture answers with file paths and class names
+  #   :admin     — feature and workflow answers (no internals leaked)
+  #   :user      — end-user how-to only; refuses to discuss internals
+  # config.mode = :developer
+
+  # === Audience scoping (controls which artifacts are visible per mode) ===
+  # By default a heuristic tags each scanned file: services/jobs/policies are
+  # developer-only, models/controllers/views are developer+admin, and the
+  # :user audience is empty until you opt in.
+  #
+  # The simplest way to expose end-user help docs to :user mode:
+  # config.user_facing_paths = ["app/views/help/**/*", "app/views/marketing/**/*"]
+  #
+  # For full control, supply a callable that returns an array of audience
+  # symbols for each artifact. nil means "use the default heuristic."
+  # config.audience_for = ->(attrs) {
+  #   case attrs[:path]
+  #   when /\Aapp\/views\/public\// then %i[developer admin user]
+  #   when /\Aapp\/services\/billing\// then %i[developer]   # tighter than default
+  #   end
+  # }
+
   # === Scan retention ===
   # Keep the N most recent scans in the database; older ones are pruned.
   # config.scan_retention = 7

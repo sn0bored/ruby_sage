@@ -66,10 +66,19 @@ module RubySage
     #   @return [Integer] provider request timeout in seconds.
     # @!attribute [rw] max_retries
     #   @return [Integer] maximum provider retry attempts.
+    # @!attribute [rw] audience_for
+    #   @return [Proc, nil] callable receiving an artifact attributes hash and
+    #     returning an array of audience symbols (+:developer+, +:admin+,
+    #     +:user+). Overrides the default heuristic in +AudienceClassifier+.
+    # @!attribute [rw] user_facing_paths
+    #   @return [Array<String>] glob patterns whose matching files are
+    #     additionally tagged for the +:user+ audience. Use this to expose
+    #     end-user help docs without writing a custom +audience_for+ callable.
     attr_accessor :provider, :api_key, :model, :summarization_model,
                   :auth_check, :scope, :mode, :scan_retention,
                   :scanner_include, :scanner_exclude,
-                  :csp_nonce, :request_timeout, :max_retries
+                  :csp_nonce, :request_timeout, :max_retries,
+                  :audience_for, :user_facing_paths
 
     # Builds a configuration object with conservative defaults.
     #
@@ -85,6 +94,8 @@ module RubySage
       @scanner_exclude = default_scanner_exclude
       @request_timeout = 30
       @max_retries = 2
+      @audience_for = nil
+      @user_facing_paths = []
     end
 
     private

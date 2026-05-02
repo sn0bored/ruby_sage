@@ -77,6 +77,16 @@ RSpec.describe RubySage::AgentScan::Planner do
     expect(manifest["summary_system_prompt"]).to include("summarizing a single file")
   end
 
+  it "tags each manifest entry with default audiences from the heuristic" do
+    described_class.new(host_root: host_root, config: config, output_dir: output_dir).run
+    manifest = JSON.parse(File.read(File.join(output_dir, "manifest.json")))
+
+    by_path = manifest["files"].to_h { |entry| [entry["path"], entry["audiences"]] }
+    expect(by_path["app/models/post.rb"]).to eq(%w[developer admin])
+    expect(by_path["config/routes.rb"]).to eq(%w[developer])
+    expect(by_path["app/controllers/posts_controller.rb"]).to eq(%w[developer admin])
+  end
+
   it "defaults the output directory to tmp/ruby_sage under the host root" do
     default_dir = host_root.join("tmp/ruby_sage")
     FileUtils.rm_rf(default_dir)
