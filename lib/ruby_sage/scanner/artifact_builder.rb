@@ -45,10 +45,25 @@ module RubySage
       # @param path [Pathname]
       # @return [Hash] artifact and redacted contents for the summary pass.
       def build(scan:, path:)
-        contents = sanitized_contents(path)
-        artifact = Artifact.create!(artifact_attributes(scan, path, contents))
+        attrs = attributes_for(path: path)
+        artifact = Artifact.create!(attrs[:artifact_attributes].merge(scan: scan))
 
-        { artifact: artifact, contents: contents }
+        { artifact: artifact, contents: attrs[:contents] }
+      end
+
+      # Computes the artifact attributes for a path without persisting.
+      # Used by AgentScan::Planner to assemble a manifest before the agent
+      # produces summaries.
+      #
+      # @param path [Pathname]
+      # @return [Hash] +:artifact_attributes+ (without +:scan+) and +:contents+.
+      def attributes_for(path:)
+        contents = sanitized_contents(path)
+
+        {
+          artifact_attributes: artifact_attributes(path, contents),
+          contents: contents
+        }
       end
 
       private
@@ -59,9 +74,8 @@ module RubySage
         SecretRedactor.new(File.read(path)).call
       end
 
-      def artifact_attributes(scan, path, contents)
+      def artifact_attributes(path, contents)
         {
-          scan: scan,
           path: relative_path(path),
           kind: classify(path),
           digest: Digest::SHA256.hexdigest(contents),

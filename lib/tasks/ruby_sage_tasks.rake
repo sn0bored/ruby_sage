@@ -10,6 +10,40 @@ namespace :ruby_sage do
          "#{scan.artifacts.count} artifacts."
   end
 
+  namespace :scan do
+    desc "Plan an agent-driven scan: write manifest.json + INSTRUCTIONS.md for a coding agent to summarize."
+    task plan: :environment do
+      output_dir = ENV.fetch("OUTPUT_DIR", nil)
+      result = RubySage::AgentScan::Planner.new(
+        host_root: Rails.root,
+        output_dir: output_dir
+      ).run
+
+      puts "Wrote manifest:     #{result[:manifest_path]}"
+      puts "Wrote instructions: #{result[:instructions_path]}"
+      puts "Files in manifest:  #{result[:file_count]} (#{result[:needs_summary_count]} need new summaries)"
+      puts ""
+      puts "Next: have your coding agent read the instructions file and write"
+      puts "  #{result[:summaries_path]}"
+      puts "Then run: bundle exec rake ruby_sage:scan:apply"
+    end
+
+    desc "Apply an agent-produced summaries.json to a manifest, creating a new completed Scan."
+    task apply: :environment do
+      output_dir = ENV.fetch("OUTPUT_DIR", Rails.root.join(RubySage::AgentScan::DEFAULT_OUTPUT_DIRNAME).to_s)
+      manifest_path = ENV.fetch("MANIFEST", File.join(output_dir, RubySage::AgentScan::MANIFEST_FILENAME))
+      summaries_path = ENV.fetch("SUMMARIES", File.join(output_dir, RubySage::AgentScan::SUMMARIES_FILENAME))
+
+      scan = RubySage::AgentScan::Applier.new(
+        manifest_path: manifest_path,
+        summaries_path: summaries_path
+      ).run
+
+      summarized = scan.artifacts.where.not(summary: nil).count
+      puts "Scan ##{scan.id} completed - #{scan.file_count} files, #{summarized} with summaries."
+    end
+  end
+
   desc "Export the latest completed scan as JSON to STDOUT."
   task export_artifacts: :environment do
     scan = RubySage::Scan.latest_completed.first
