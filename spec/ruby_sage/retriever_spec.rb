@@ -67,6 +67,36 @@ RSpec.describe RubySage::Retriever do
     expect(result[:citations].first).to eq(donor_citation)
   end
 
+  describe "audience scoping" do
+    it "excludes artifacts whose audiences do not include the requested mode" do
+      scan = completed_scan
+      create_artifact(scan, path: "app/services/billing.rb", kind: "service",
+                            summary: "Billing service handles charges.", public_symbols: ["Billing"],
+                            audiences: %w[developer])
+      create_artifact(scan, path: "app/views/help/billing.html.erb", kind: "view",
+                            summary: "Billing help page guides users.", public_symbols: [],
+                            audiences: %w[developer admin user])
+
+      developer = described_class.new(scan: scan, mode: :developer).call(query: "billing help")
+      user = described_class.new(scan: scan, mode: :user).call(query: "billing help")
+
+      expect(developer[:citations].pluck(:path)).to include(
+        "app/services/billing.rb", "app/views/help/billing.html.erb"
+      )
+      expect(user[:citations].pluck(:path)).to eq(["app/views/help/billing.html.erb"])
+    end
+
+    it "treats artifacts with no audiences as visible in every mode (backwards compat)" do
+      scan = completed_scan
+      create_artifact(scan, path: "app/legacy.rb", kind: "other",
+                            summary: "Legacy file.", public_symbols: ["Legacy"], audiences: nil)
+
+      result = described_class.new(scan: scan, mode: :user).call(query: "legacy")
+
+      expect(result[:citations].pluck(:path)).to eq(["app/legacy.rb"])
+    end
+  end
+
   def completed_scan
     RubySage::Scan.create!(status: "completed", finished_at: Time.current)
   end

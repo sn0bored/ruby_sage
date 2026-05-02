@@ -41,4 +41,19 @@ RSpec.describe RubySage::Artifact do
 
     expect(described_class.of_kind("model").pluck(:path)).to eq(["app/models/post.rb"])
   end
+
+  describe "#visible_in_mode?" do
+    it "is true when audiences include the mode" do
+      artifact = described_class.create!(artifact_attributes.merge(audiences: %w[developer admin]))
+      expect(artifact.visible_in_mode?(:admin)).to be(true)
+      expect(artifact.visible_in_mode?(:user)).to be(false)
+    end
+
+    it "is true for every mode when audiences are blank (backwards compat)" do
+      artifact = described_class.create!(artifact_attributes.merge(audiences: nil))
+      %i[developer admin user].each do |mode|
+        expect(artifact.visible_in_mode?(mode)).to be(true), "expected visible in #{mode}"
+      end
+    end
+  end
 end

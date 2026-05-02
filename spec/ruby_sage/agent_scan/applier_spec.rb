@@ -36,6 +36,24 @@ RSpec.describe RubySage::AgentScan::Applier do
     File.write(summaries_path, JSON.generate(payload))
   end
 
+  def help_view_entry(path)
+    {
+      "path" => path, "kind" => "view", "digest" => "12345678" * 8,
+      "public_symbols" => [], "redacted_contents" => "<h1>Help</h1>",
+      "previous_summary" => nil, "needs_summary" => true,
+      "audiences" => %w[developer admin]
+    }
+  end
+
+  def write_payload_with_overrides(path)
+    payload = {
+      "schema_version" => 1,
+      "summaries" => { path => "Help page for billing." },
+      "audience_overrides" => { path => %w[developer admin user] }
+    }
+    File.write(summaries_path, JSON.generate(payload))
+  end
+
   it "creates a completed scan with one artifact per manifest entry" do
     write_manifest(files: [
                      {
@@ -122,6 +140,32 @@ RSpec.describe RubySage::AgentScan::Applier do
     expect do
       described_class.new(manifest_path: manifest_path, summaries_path: summaries_path).run
     end.to raise_error(described_class::InvalidManifest, /schema_version/)
+  end
+
+  it "stores the manifest's audiences on each artifact" do
+    write_manifest(files: [
+                     {
+                       "path" => "app/services/billing.rb", "kind" => "service",
+                       "digest" => "feedface" * 8, "public_symbols" => %w[Billing],
+                       "redacted_contents" => "class Billing; end", "previous_summary" => nil,
+                       "needs_summary" => true, "audiences" => %w[developer]
+                     }
+                   ])
+    write_summaries(summaries: { "app/services/billing.rb" => "Billing service summary" })
+
+    scan = described_class.new(manifest_path: manifest_path, summaries_path: summaries_path).run
+
+    expect(scan.artifacts.first.audiences).to eq(%w[developer])
+  end
+
+  it "honors agent-supplied audience_overrides over the manifest defaults" do
+    help_path = "app/views/help/billing.html.erb"
+    write_manifest(files: [help_view_entry(help_path)])
+    write_payload_with_overrides(help_path)
+
+    scan = described_class.new(manifest_path: manifest_path, summaries_path: summaries_path).run
+
+    expect(scan.artifacts.first.audiences).to eq(%w[developer admin user])
   end
 
   it "tolerates a missing summaries file by falling back to previous_summary" do

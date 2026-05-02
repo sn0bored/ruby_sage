@@ -2,6 +2,7 @@
 
 require "digest"
 require "pathname"
+require "ruby_sage/audience_classifier"
 
 module RubySage
   class Scanner
@@ -34,9 +35,11 @@ module RubySage
       # Initializes a builder for paths under one host root.
       #
       # @param host_root [String, Pathname]
+      # @param audience_classifier [RubySage::AudienceClassifier]
       # @return [RubySage::Scanner::ArtifactBuilder]
-      def initialize(host_root:)
+      def initialize(host_root:, audience_classifier: AudienceClassifier.new)
         @host_root = Pathname(host_root).expand_path
+        @audience_classifier = audience_classifier
       end
 
       # Creates one Artifact and returns it with its sanitized contents.
@@ -68,14 +71,14 @@ module RubySage
 
       private
 
-      attr_reader :host_root
+      attr_reader :host_root, :audience_classifier
 
       def sanitized_contents(path)
         SecretRedactor.new(File.read(path)).call
       end
 
       def artifact_attributes(path, contents)
-        {
+        attrs = {
           path: relative_path(path),
           kind: classify(path),
           digest: Digest::SHA256.hexdigest(contents),
@@ -83,6 +86,8 @@ module RubySage
           public_symbols: extract_symbols(contents),
           route_mappings: nil
         }
+        attrs[:audiences] = audience_classifier.call(attributes: attrs)
+        attrs
       end
 
       def relative_path(path)

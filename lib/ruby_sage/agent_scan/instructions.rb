@@ -92,25 +92,37 @@ module RubySage
       end
 
       def output_format_section
-        example = {
-          "schema_version" => SCHEMA_VERSION,
-          "summaries" => {
-            "app/models/user.rb" => "The User model represents a signed-in account...",
-            "app/controllers/posts_controller.rb" => "PostsController exposes CRUD..."
-          }
-        }
         <<~MD.strip
           ## Output format
 
           Write `#{SUMMARIES_FILENAME}` as a JSON file with this shape:
 
           ```json
-          #{JSON.pretty_generate(example)}
+          #{JSON.pretty_generate(example_payload)}
           ```
 
-          Keys are file paths exactly as they appear in the manifest. Values are
-          the summary strings. Only include entries you actually summarized.
+          - `summaries`: keys are file paths exactly as they appear in the
+            manifest. Values are the summary strings. Only include entries you
+            actually summarized.
+          - `audience_overrides` (optional): keys are file paths, values are
+            lists of audiences (`developer`, `admin`, `user`). Use this to
+            expose end-user help docs to the `user` mode, or to hide a sensitive
+            internal file from the `admin` mode. Omit a path to keep the
+            heuristic default already shown in the manifest's `audiences` field.
         MD
+      end
+
+      def example_payload
+        {
+          "schema_version" => SCHEMA_VERSION,
+          "summaries" => {
+            "app/models/user.rb" => "The User model represents a signed-in account...",
+            "app/controllers/posts_controller.rb" => "PostsController exposes CRUD..."
+          },
+          "audience_overrides" => {
+            "app/views/help/index.html.erb" => %w[developer admin user]
+          }
+        }
       end
 
       def rules_section

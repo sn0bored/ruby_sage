@@ -87,6 +87,7 @@ module RubySage
           "kind" => artifact_attributes[:kind],
           "digest" => artifact_attributes[:digest],
           "public_symbols" => artifact_attributes[:public_symbols],
+          "audiences" => Array(artifact_attributes[:audiences]),
           "redacted_contents" => attrs[:contents],
           "previous_summary" => cached_summary,
           "needs_summary" => cached_summary.nil?

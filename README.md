@@ -232,6 +232,13 @@ RubySage.configure do |config|
   config.scope                = :admin             # :admin | :signed_in | :public_rate_limited
   config.auth_check           = ->(c) { c.current_user&.admin? }
 
+  # Mode (shapes prompt + filters artifacts by audience)
+  config.mode                 = :developer         # :developer | :admin | :user
+
+  # Audience scoping
+  config.user_facing_paths    = ["app/views/help/**/*"] # additively tag :user
+  config.audience_for         = ->(attrs) { ... }       # full override
+
   # Optional CSP nonce hook
   config.csp_nonce            = ->(c) { c.content_security_policy_nonce }
 

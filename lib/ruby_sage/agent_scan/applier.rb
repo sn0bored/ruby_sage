@@ -28,12 +28,12 @@ module RubySage
       # @return [RubySage::Scan]
       def run
         manifest = load_manifest
-        summaries = load_summaries
+        agent_payload = load_summaries
 
         scan = nil
         Scan.transaction do
           scan = create_scan(manifest)
-          create_artifacts(scan, manifest, summaries)
+          create_artifacts(scan, manifest, agent_payload)
         end
         prune_old_scans
         scan
@@ -57,13 +57,16 @@ module RubySage
       end
 
       def load_summaries
-        return {} unless summaries_path.file?
+        return { "summaries" => {}, "audience_overrides" => {} } unless summaries_path.file?
 
         payload = JSON.parse(summaries_path.read)
         raise InvalidManifest, "Unsupported summaries schema_version: #{payload['schema_version']}" \
           unless payload["schema_version"] == SCHEMA_VERSION
 
-        Hash(payload["summaries"])
+        {
+          "summaries" => Hash(payload["summaries"]),
+          "audience_overrides" => Hash(payload["audience_overrides"])
+        }
       rescue JSON::ParserError => e
         raise InvalidManifest, "Summaries file is not valid JSON: #{e.message}"
       end
@@ -80,7 +83,10 @@ module RubySage
         )
       end
 
-      def create_artifacts(scan, manifest, summaries)
+      def create_artifacts(scan, manifest, agent_payload)
+        summaries = agent_payload["summaries"]
+        overrides = agent_payload["audience_overrides"]
+
         manifest["files"].each do |entry|
           Artifact.create!(
             scan: scan,
@@ -88,10 +94,18 @@ module RubySage
             kind: entry["kind"],
             digest: entry["digest"],
             public_symbols: Array(entry["public_symbols"]),
+            audiences: resolve_audiences(entry, overrides),
             route_mappings: entry["route_mappings"],
             summary: resolve_summary(entry, summaries)
           )
         end
+      end
+
+      def resolve_audiences(entry, overrides)
+        override = overrides[entry["path"]]
+        return Array(override).map(&:to_s) unless override.nil?
+
+        Array(entry["audiences"]).map(&:to_s)
       end
 
       def resolve_summary(entry, summaries)
