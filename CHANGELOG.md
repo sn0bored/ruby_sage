@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Added
+
+- Agent-driven scan flow: `rake ruby_sage:scan:plan` writes a manifest + `INSTRUCTIONS.md` that any local coding agent (Claude Code, Codex, Cursor) can fill in, then `rake ruby_sage:scan:apply` ingests the agent's `summaries.json` and persists a completed `Scan`. Removes the API-token cost of summarization for developers who already pay for an agent. The same flow ships manifest + summaries to production for zero-LLM-spend prod installs.
+- `RubySage::AgentScan` module: `Planner`, `Applier`, `Instructions`.
+- `Scanner::ArtifactBuilder#attributes_for` — exposes per-file artifact attributes without persisting, enabling the manifest builder to share the scanner's classification, redaction, and digest logic.
+
 ## [0.1.0] - 2026-05-01
 
 First public release. Supports Rails 5.2+ / Ruby 2.7+.
