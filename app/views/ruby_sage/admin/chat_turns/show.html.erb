@@ -45,6 +45,8 @@
       <div><strong>Asker:</strong> <%= @turn.asker_type ? "#{@turn.asker_type} ##{@turn.asker_id}" : "—" %></div>
       <div><strong>Iterations:</strong> <%= @turn.iterations || "—" %></div>
       <div><strong>Tokens:</strong> input <%= @turn.input_tokens || 0 %>, output <%= @turn.output_tokens || 0 %>, cache read <%= @turn.cache_read_tokens || 0 %>, cache create <%= @turn.cache_creation_tokens || 0 %></div>
+      <div><strong>Model:</strong> <%= @turn.model || "—" %></div>
+      <div><strong>Cost:</strong> <%= @turn.cost_usd ? "$#{format("%.6f", @turn.cost_usd)} USD" : "— (unknown model)" %></div>
     </div>
   </div>
 

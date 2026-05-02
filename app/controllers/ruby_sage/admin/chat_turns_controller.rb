@@ -44,7 +44,8 @@ module RubySage
           with_tool_calls: scope.with_tool_calls.count,
           input_tokens: scope.sum(:input_tokens),
           output_tokens: scope.sum(:output_tokens),
-          cache_read_tokens: scope.sum(:cache_read_tokens)
+          cache_read_tokens: scope.sum(:cache_read_tokens),
+          cost_usd: scope.find_each.sum { |turn| turn.cost_usd.to_f }
         }
       end
 

@@ -55,6 +55,7 @@
       <div class="rs-admin-stat"><div class="rs-admin-stat-value"><%= number_with_delimiter(@stats[:input_tokens].to_i) %></div><div class="rs-admin-stat-label">Input tokens</div></div>
       <div class="rs-admin-stat"><div class="rs-admin-stat-value"><%= number_with_delimiter(@stats[:output_tokens].to_i) %></div><div class="rs-admin-stat-label">Output tokens</div></div>
       <div class="rs-admin-stat"><div class="rs-admin-stat-value"><%= number_with_delimiter(@stats[:cache_read_tokens].to_i) %></div><div class="rs-admin-stat-label">Cache read</div></div>
+      <div class="rs-admin-stat"><div class="rs-admin-stat-value">$<%= format("%.2f", @stats[:cost_usd] || 0) %></div><div class="rs-admin-stat-label">Spend (USD)</div></div>
     </div>
   </div>
 
@@ -80,6 +81,7 @@
             <th>Question</th>
             <th>Status</th>
             <th>Tokens</th>
+            <th>Cost</th>
             <th>Iter</th>
             <th></th>
           </tr>
@@ -95,6 +97,7 @@
               </td>
               <td><span class="rs-badge rs-badge-<%= turn.status %>"><%= turn.status %></span></td>
               <td><%= turn.total_tokens %></td>
+              <td><%= turn.cost_usd ? "$#{format("%.4f", turn.cost_usd)}" : "—" %></td>
               <td><%= turn.iterations || "—" %></td>
               <td><%= link_to "View", ruby_sage.admin_chat_turn_path(turn), class: "rs-admin-link" %></td>
             </tr>

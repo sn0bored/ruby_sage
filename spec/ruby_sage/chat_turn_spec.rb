@@ -72,4 +72,21 @@ RSpec.describe RubySage::ChatTurn do
     )
     expect(turn.total_tokens).to eq(125)
   end
+
+  describe "#cost_usd" do
+    it "returns the calculator's USD cost when the model is known" do
+      turn = described_class.create!(
+        mode: "admin", question: "q", status: "completed",
+        model: "claude-sonnet-4-6", input_tokens: 1_000_000, output_tokens: 100_000
+      )
+      expect(turn.cost_usd).to be_within(0.001).of(4.50)
+    end
+
+    it "returns nil when the model is missing or unknown" do
+      missing = described_class.create!(mode: "admin", question: "q", status: "completed", model: nil)
+      unknown = described_class.create!(mode: "admin", question: "q", status: "completed", model: "nope")
+      expect(missing.cost_usd).to be_nil
+      expect(unknown.cost_usd).to be_nil
+    end
+  end
 end
