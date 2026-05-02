@@ -32,7 +32,12 @@ RSpec.describe RubySage::Providers::OpenAI do
   it "parses answer and usage from the response" do
     stub_successful_request(body: expected_request_body)
 
-    expect(chat).to eq(expected_provider_response)
+    expect(chat).to include(expected_provider_response)
+  end
+
+  it "rejects tools (V1 OpenAI does not support tool calling)" do
+    expect { provider.chat(system_prompt: "x", cached_context: nil, messages: messages, tools: [{ name: "x" }]) }
+      .to raise_error(RubySage::Providers::ProviderError, /does not support tool calling/)
   end
 
   it "raises ProviderError on non-2xx responses" do

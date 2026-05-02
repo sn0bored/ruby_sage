@@ -48,12 +48,36 @@ module RubySage
     MODES = { developer: DEVELOPER, admin: ADMIN, user: USER }.freeze
     private_constant :MODES
 
+    DATABASE_TOOLS_ADDENDUM = <<~PROMPT
+      You have access to a read-only SQL tool (+query_database+) and a schema
+      introspection tool (+describe_table+). Prefer to answer from the
+      provided artifact context when possible. Run a SQL query only when the
+      question is about live data (e.g., "who is the author of post 47?",
+      "how many active users last week?"). Never run a query for questions
+      already answerable from the context.
+
+      When you do run a query: SELECT only, single statement. Call
+      +describe_table+ first if you are not certain a column exists. Format
+      the result as a plain-language answer; do not paste raw rows back unless
+      the user asked to see the data.
+    PROMPT
+
     # Returns the system prompt for the given mode, falling back to DEVELOPER.
+    # Optionally extends the prompt with a database-tools addendum when the
+    # +:admin+ mode chat loop has the tool registry enabled, plus a tenant
+    # scope hint from +config.query_scope+.
     #
     # @param mode [Symbol, String] one of :developer, :admin, or :user.
+    # @param with_database_tools [Boolean] include the +DATABASE_TOOLS_ADDENDUM+.
+    # @param query_scope_hint [String, nil] e.g. +"organization_id = 42"+.
     # @return [String]
-    def self.for_mode(mode)
-      MODES.fetch(mode.to_sym, DEVELOPER)
+    def self.for_mode(mode, with_database_tools: false, query_scope_hint: nil)
+      base = MODES.fetch(mode.to_sym, DEVELOPER)
+      return base unless with_database_tools
+
+      sections = [base, DATABASE_TOOLS_ADDENDUM]
+      sections << "Always scope queries to: #{query_scope_hint}" if query_scope_hint.to_s.strip.length.positive?
+      sections.join("\n\n")
     end
   end
 end

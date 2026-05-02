@@ -32,7 +32,17 @@ RSpec.describe RubySage::Providers::Anthropic do
   it "parses answer and usage from the response" do
     stub_successful_request(body: expected_request_body)
 
-    expect(chat).to eq(expected_provider_response)
+    expect(chat).to include(expected_provider_response)
+  end
+
+  it "exposes raw_content, tool_calls, and stop_reason for the loop" do
+    stub_successful_request(body: expected_request_body)
+
+    response = chat
+
+    expect(response[:tool_calls]).to eq([])
+    expect(response[:raw_content]).to eq([{ "type" => "text", "text" => "PostsController lists posts." }])
+    expect(response).to have_key(:stop_reason)
   end
 
   it "raises ProviderError on non-2xx responses" do

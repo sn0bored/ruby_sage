@@ -16,9 +16,10 @@ module RubySage
       page_context = permitted_page_context
       query = last_user_message(messages)
       retrieval = RubySage::Retriever.new.call(query: query, page_context: page_context)
-      provider_response = provider_response_for(messages, page_context, retrieval)
+      tool_registry = RubySage::Tools::Registry.for(mode: RubySage.configuration.mode, controller: self)
+      result = run_chat(messages, page_context, retrieval, tool_registry)
 
-      render json: response_payload(provider_response, retrieval)
+      render json: response_payload(result, retrieval, tool_registry)
     rescue Providers::ProviderError => e
       render json: { error: "provider_error", detail: e.message }, status: :bad_gateway
     rescue ActionController::ParameterMissing => e
@@ -87,21 +88,52 @@ module RubySage
       annotated
     end
 
-    def provider_response_for(messages, page_context, retrieval)
-      RubySage.provider.chat(
-        system_prompt: RubySage::Prompts.for_mode(RubySage.configuration.mode),
-        cached_context: build_artifact_context(retrieval[:artifacts]),
-        messages: messages_with_context(messages, page_context)
+    def run_chat(messages, page_context, retrieval, tool_registry)
+      system_prompt = RubySage::Prompts.for_mode(
+        RubySage.configuration.mode,
+        with_database_tools: !tool_registry.empty?,
+        query_scope_hint: query_scope_hint
       )
+      cached_context = build_artifact_context(retrieval[:artifacts])
+      annotated_messages = messages_with_context(messages, page_context)
+
+      if tool_registry.empty?
+        single_shot(system_prompt, cached_context, annotated_messages)
+      else
+        RubySage::ToolLoop.new(registry: tool_registry).run(
+          system_prompt: system_prompt,
+          cached_context: cached_context,
+          messages: annotated_messages
+        )
+      end
     end
 
-    def response_payload(provider_response, retrieval)
-      {
-        answer: provider_response[:answer],
+    def single_shot(system_prompt, cached_context, messages)
+      response = RubySage.provider.chat(
+        system_prompt: system_prompt,
+        cached_context: cached_context,
+        messages: messages
+      )
+      { answer: response[:answer], usage: response[:usage], tool_calls: [], iterations: 1 }
+    end
+
+    def query_scope_hint
+      callable = RubySage.configuration.query_scope
+      return nil if callable.nil?
+
+      callable.call(self)
+    end
+
+    def response_payload(result, retrieval, tool_registry)
+      payload = {
+        answer: result[:answer],
         citations: retrieval[:citations],
         scan_id: retrieval[:scan_id],
-        usage: provider_response[:usage]
+        usage: result[:usage]
       }
+      payload[:tool_calls] = result[:tool_calls] if result[:tool_calls]&.any?
+      payload[:iterations] = result[:iterations] if result[:iterations] && !tool_registry.empty?
+      payload
     end
   end
 end

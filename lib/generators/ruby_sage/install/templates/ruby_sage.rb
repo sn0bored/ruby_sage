@@ -51,6 +51,27 @@ RubySage.configure do |config|
   #   end
   # }
 
+  # === Database queries (admin "magic search") ===
+  # When :admin mode is on AND this is true, the chat loop can run read-only
+  # SELECTs against your DB to answer live-data questions
+  # ("who is the author of post 47?"). Three safety layers: SELECT-only
+  # validation, mandatory transaction rollback, PostgreSQL statement_timeout.
+  # The strongest safety is a read-only DB user — set config.query_connection
+  # if true tenant isolation matters.
+  # config.enable_database_queries = false
+  #
+  # Tenant scoping (prompt-level reminder appended to the admin system prompt).
+  # For hard isolation pair with a read-only connection and DB row security.
+  # config.query_scope = ->(controller) { "organization_id = #{controller.current_user.organization_id}" }
+  #
+  # Use a dedicated read-only ActiveRecord connection for queries.
+  # config.query_connection = ->(_controller) { ReadOnlyDatabase.connection }
+  #
+  # Hard caps on query results.
+  # config.max_query_rows         = 100
+  # config.query_timeout_ms       = 5_000
+  # config.tool_loop_max_iterations = 5
+
   # === Scan retention ===
   # Keep the N most recent scans in the database; older ones are pruned.
   # config.scan_retention = 7

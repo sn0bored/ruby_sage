@@ -31,16 +31,23 @@ module RubySage
       # @return [Hash] response with :answer, :citations, and :usage keys.
       # @raise [ArgumentError] when no API key is configured.
       # @raise [RubySage::Providers::ProviderError] when OpenAI returns an error.
-      def chat(system_prompt:, cached_context:, messages:, &block)
+      def chat(system_prompt:, cached_context:, messages:, tools: nil, &block)
         ignore_streaming_block(block)
         raise ArgumentError, "api_key not configured" if @config.api_key.nil?
+        if tools.present?
+          raise ProviderError,
+                "OpenAI provider does not support tool calling in V1; use :anthropic."
+        end
 
         response = post_json(build_body(system_prompt, cached_context, messages))
 
         {
           answer: extract_answer(response),
           citations: [],
-          usage: extract_usage(response)
+          usage: extract_usage(response),
+          tool_calls: [],
+          stop_reason: "stop",
+          raw_content: []
         }
       end
 
