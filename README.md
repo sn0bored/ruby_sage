@@ -239,6 +239,14 @@ RubySage.configure do |config|
   config.user_facing_paths    = ["app/views/help/**/*"] # additively tag :user
   config.audience_for         = ->(attrs) { ... }       # full override
 
+  # Admin database queries (read-only SELECT via tool loop)
+  config.enable_database_queries  = false
+  config.query_scope              = ->(c) { "organization_id = #{c.current_user.organization_id}" }
+  config.query_connection         = ->(_c) { ReadOnlyDatabase.connection }
+  config.max_query_rows           = 100
+  config.query_timeout_ms         = 5_000
+  config.tool_loop_max_iterations = 5
+
   # Optional CSP nonce hook
   config.csp_nonce            = ->(c) { c.content_security_policy_nonce }
 

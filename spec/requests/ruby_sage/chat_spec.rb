@@ -138,6 +138,49 @@ RSpec.describe "RubySage chat", type: :request do
     end
   end
 
+  context "with mode: :admin and enable_database_queries" do
+    before do
+      RubySage.configure do |c|
+        c.auth_check = ->(_) { true }
+        c.mode = :admin
+        c.enable_database_queries = true
+      end
+      seed_completed_scan
+    end
+
+    it "sends the database-tools addendum AND the tools array to the provider" do
+      provider = stub_provider(tool_use_response, final_response)
+
+      post "/ruby_sage/chat", params: { message: "who is the author of post 47?" }, as: :json
+
+      expect(provider).to have_received(:chat).at_least(:once) do |kwargs|
+        expect(kwargs[:system_prompt]).to include("query_database")
+        expect(kwargs[:tools].map { |t| t["name"] }).to include("query_database", "describe_table")
+      end
+    end
+
+    it "returns tool_calls and iterations in the response when the model invoked a tool" do
+      stub_provider(tool_use_response, final_response)
+
+      post "/ruby_sage/chat", params: { message: "anything" }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body["tool_calls"]).to be_an(Array)
+      expect(response.parsed_body["iterations"]).to eq(2)
+    end
+
+    it "appends the query_scope hint to the system prompt when configured" do
+      RubySage.configure { |c| c.query_scope = ->(_controller) { "organization_id = 99" } }
+      provider = stub_provider(final_response)
+
+      post "/ruby_sage/chat", params: { message: "show me users" }, as: :json
+
+      expect(provider).to have_received(:chat).at_least(:once) do |kwargs|
+        expect(kwargs[:system_prompt]).to include("organization_id = 99")
+      end
+    end
+  end
+
   def allow_access
     RubySage.configure { |config| config.auth_check = ->(_controller) { true } }
   end
@@ -155,8 +198,9 @@ RSpec.describe "RubySage chat", type: :request do
     scan
   end
 
-  def stub_provider(response)
-    provider = instance_double(RubySage::Providers::Base, chat: response)
+  def stub_provider(*responses)
+    provider = instance_double(RubySage::Providers::Base)
+    allow(provider).to receive(:chat).and_return(*responses)
     allow(RubySage).to receive(:provider).and_return(provider)
     provider
   end
@@ -182,7 +226,33 @@ RSpec.describe "RubySage chat", type: :request do
     {
       answer: "PostsController#index lists posts.",
       citations: [],
-      usage: { input_tokens: 12, output_tokens: 7 }
+      usage: { input_tokens: 12, output_tokens: 7 },
+      tool_calls: [],
+      stop_reason: "end_turn",
+      raw_content: [{ "type" => "text", "text" => "PostsController#index lists posts." }]
+    }
+  end
+
+  def tool_use_response
+    {
+      answer: "",
+      tool_calls: [{ id: "call_1", name: "describe_table", input: { "table_name" => "ruby_sage_artifacts" } }],
+      usage: { input_tokens: 30, output_tokens: 5 },
+      stop_reason: "tool_use",
+      raw_content: [
+        { "type" => "tool_use", "id" => "call_1", "name" => "describe_table",
+          "input" => { "table_name" => "ruby_sage_artifacts" } }
+      ]
+    }
+  end
+
+  def final_response
+    {
+      answer: "Found it.",
+      tool_calls: [],
+      usage: { input_tokens: 50, output_tokens: 8 },
+      stop_reason: "end_turn",
+      raw_content: [{ "type" => "text", "text" => "Found it." }]
     }
   end
 
