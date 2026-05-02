@@ -4,6 +4,9 @@
 
 ### Added
 
+- `examples/` directory with end-to-end walkthroughs: agent-driven scan, admin database queries, prod sync. Includes a sample `summaries.json` showing the agent contract.
+- `SAAS_PLAN.md` — design sketch for the v2 hosted product (RubySage Cloud).
+- README "Compared to alternatives" section positioning RubySage against Cursor codebase chat, Continue/Aider, ChatGPT/Claude.ai file uploads, and Sourcegraph Cody.
 - Agentic database queries for `:admin` mode. When `config.enable_database_queries = true` and the configured `mode` is `:admin`, the chat loop exposes two tools to the model: `query_database` (read-only SELECT) and `describe_table` (column introspection). The model decides when to query live data vs. answer from artifact context. Three defense layers on every query: SELECT-only validation, mandatory transaction rollback (so any write that slipped past validation cannot persist), and PostgreSQL `statement_timeout`. Hard caps on rows (`max_query_rows`, default 100), cell size (1KB), SQL length (4KB), and tool-loop iterations (`tool_loop_max_iterations`, default 5). Strongest defense remains a read-only DB user via `config.query_connection`.
 - `RubySage::DatabaseQueries::SafeExecutor` — standalone read-only SQL executor (usable outside the tool loop).
 - `RubySage::Tools::Base`, `Tools::DatabaseQuery`, `Tools::DescribeTable`, `Tools::Registry`.
