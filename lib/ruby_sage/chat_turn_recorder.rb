@@ -45,6 +45,7 @@ module RubySage
       {
         scan_id: retrieval&.dig(:scan_id),
         mode: RubySage.configuration.mode.to_s,
+        model: RubySage.configuration.model,
         question: question.to_s,
         citations: retrieval ? Array(retrieval[:citations]) : [],
         status: status,

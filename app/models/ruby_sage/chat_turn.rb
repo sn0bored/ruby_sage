@@ -42,5 +42,19 @@ module RubySage
     def used_tools?
       Array(tool_calls).any?
     end
+
+    # USD cost of this turn, calculated from token usage and the recorded
+    # model name. Returns nil when the model is unknown to the calculator.
+    #
+    # @return [Float, nil]
+    def cost_usd
+      RubySage::CostCalculator.call(
+        model: model,
+        input_tokens: input_tokens,
+        output_tokens: output_tokens,
+        cache_read_tokens: cache_read_tokens,
+        cache_creation_tokens: cache_creation_tokens
+      )
+    end
   end
 end
