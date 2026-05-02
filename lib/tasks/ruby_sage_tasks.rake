@@ -85,6 +85,21 @@ namespace :ruby_sage do
     RubySage::CliChat.new.run(query)
   end
 
+  desc "Diagnose common RubySage install problems and report fixes."
+  task doctor: :environment do
+    findings = RubySage::Doctor.new.run
+    width = findings.map { |f| f.check.length }.max
+    findings.each do |finding|
+      puts format("%s  %-#{width}s  %s", finding.severity_label, finding.check, finding.message)
+      puts format("   %-#{width}s  ↳ %s", "", finding.fix) if finding.fix
+    end
+    errors = findings.count { |f| f.status == :error }
+    warns = findings.count { |f| f.status == :warn }
+    puts ""
+    puts "#{findings.size} checks: #{findings.count(&:ok?)} ok, #{warns} warn, #{errors} error"
+    exit(errors.positive? ? 1 : 0)
+  end
+
   desc "Import a previously-exported scan from STDIN as a new completed Scan."
   task import_artifacts: :environment do
     payload = JSON.parse($stdin.read)

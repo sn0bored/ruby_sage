@@ -70,6 +70,7 @@ Metrics/ClassLength:
   Exclude:
     - "lib/ruby_sage/agent_scan/instructions.rb"
     - "app/controllers/ruby_sage/chat_controller.rb"
+    - "lib/ruby_sage/doctor.rb"
 
 Metrics/BlockLength:
   Exclude:
