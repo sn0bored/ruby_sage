@@ -95,13 +95,21 @@ module RubySage
     # @!attribute [rw] tool_loop_max_iterations
     #   @return [Integer] safety cap on tool-call iterations per chat turn.
     #     Default 5.
+    # @!attribute [rw] persist_chat_turns
+    #   @return [Boolean] when true, every chat turn writes a +ChatTurn+ row
+    #     for audit + usage tracking. Default true.
+    # @!attribute [rw] identify_asker
+    #   @return [Proc, nil] callable receiving the controller and returning the
+    #     ActiveRecord object that asked the question (e.g. +current_user+) for
+    #     the +ChatTurn#asker+ polymorphic reference. Optional.
     attr_accessor :provider, :api_key, :model, :summarization_model,
                   :auth_check, :scope, :mode, :scan_retention,
                   :scanner_include, :scanner_exclude,
                   :csp_nonce, :request_timeout, :max_retries,
                   :audience_for, :user_facing_paths,
                   :enable_database_queries, :query_scope, :query_connection,
-                  :max_query_rows, :query_timeout_ms, :tool_loop_max_iterations
+                  :max_query_rows, :query_timeout_ms, :tool_loop_max_iterations,
+                  :persist_chat_turns, :identify_asker
 
     # Builds a configuration object with conservative defaults.
     #
@@ -143,6 +151,8 @@ module RubySage
       @max_query_rows = 100
       @query_timeout_ms = 5_000
       @tool_loop_max_iterations = 5
+      @persist_chat_turns = true
+      @identify_asker = nil
     end
 
     def default_scanner_include

@@ -19,8 +19,10 @@ module RubySage
       tool_registry = RubySage::Tools::Registry.for(mode: RubySage.configuration.mode, controller: self)
       result = run_chat(messages, page_context, retrieval, tool_registry)
 
+      record_chat_turn(query, retrieval, result, status: "completed")
       render json: response_payload(result, retrieval, tool_registry)
     rescue Providers::ProviderError => e
+      record_chat_turn(safely_extract_query, nil, nil, status: "failed", error_message: e.message)
       render json: { error: "provider_error", detail: e.message }, status: :bad_gateway
     rescue ActionController::ParameterMissing => e
       render json: { error: "parameter_missing", detail: e.message }, status: :bad_request
@@ -89,23 +91,23 @@ module RubySage
     end
 
     def run_chat(messages, page_context, retrieval, tool_registry)
-      system_prompt = RubySage::Prompts.for_mode(
+      system_prompt = system_prompt_for(tool_registry)
+      cached_context = build_artifact_context(retrieval[:artifacts])
+      annotated = messages_with_context(messages, page_context)
+
+      return single_shot(system_prompt, cached_context, annotated) if tool_registry.empty?
+
+      RubySage::ToolLoop.new(registry: tool_registry).run(
+        system_prompt: system_prompt, cached_context: cached_context, messages: annotated
+      )
+    end
+
+    def system_prompt_for(tool_registry)
+      RubySage::Prompts.for_mode(
         RubySage.configuration.mode,
         with_database_tools: !tool_registry.empty?,
         query_scope_hint: query_scope_hint
       )
-      cached_context = build_artifact_context(retrieval[:artifacts])
-      annotated_messages = messages_with_context(messages, page_context)
-
-      if tool_registry.empty?
-        single_shot(system_prompt, cached_context, annotated_messages)
-      else
-        RubySage::ToolLoop.new(registry: tool_registry).run(
-          system_prompt: system_prompt,
-          cached_context: cached_context,
-          messages: annotated_messages
-        )
-      end
     end
 
     def single_shot(system_prompt, cached_context, messages)
@@ -134,6 +136,20 @@ module RubySage
       payload[:tool_calls] = result[:tool_calls] if result[:tool_calls]&.any?
       payload[:iterations] = result[:iterations] if result[:iterations] && !tool_registry.empty?
       payload
+    end
+
+    def record_chat_turn(question, retrieval, result, status:, error_message: nil)
+      RubySage::ChatTurnRecorder.new(controller: self).call(
+        question: question, retrieval: retrieval, result: result,
+        status: status, error_message: error_message
+      )
+    end
+
+    def safely_extract_query
+      messages = permitted_messages
+      last_user_message(messages)
+    rescue StandardError
+      ""
     end
   end
 end

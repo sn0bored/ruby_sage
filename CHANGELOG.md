@@ -4,6 +4,11 @@
 
 ### Added
 
+- **Chat turn audit + usage persistence.** Every chat-widget exchange now writes a `RubySage::ChatTurn` row capturing question, answer, mode, tool calls (including the SQL the model ran in `:admin` mode), citations, token usage, and asker identity (when `config.identify_asker` is set). Powers the new admin audit dashboard at `/ruby_sage/admin/chat_turns` and is the data backbone for the future SaaS usage metering. Per-turn writes are wrapped in begin/rescue so persistence failures never break a chat response.
+- New migration creating `ruby_sage_chat_turns`. `Scan has_many :chat_turns, dependent: :nullify` so deleting an old scan doesn't cascade-destroy historical turns.
+- Admin views: `/ruby_sage/admin/chat_turns` (filterable list with last-30-days usage stats) and `/ruby_sage/admin/chat_turns/:id` (full detail with tool-call audit).
+- `RubySage::ChatTurnRecorder` — extracted recording logic, independently testable.
+- Configuration: `config.persist_chat_turns` (default true) and `config.identify_asker` (callable, optional).
 - Agentic database queries for `:admin` mode. When `config.enable_database_queries = true` and the configured `mode` is `:admin`, the chat loop exposes two tools to the model: `query_database` (read-only SELECT) and `describe_table` (column introspection). The model decides when to query live data vs. answer from artifact context. Three defense layers on every query: SELECT-only validation, mandatory transaction rollback (so any write that slipped past validation cannot persist), and PostgreSQL `statement_timeout`. Hard caps on rows (`max_query_rows`, default 100), cell size (1KB), SQL length (4KB), and tool-loop iterations (`tool_loop_max_iterations`, default 5). Strongest defense remains a read-only DB user via `config.query_connection`.
 - `RubySage::DatabaseQueries::SafeExecutor` — standalone read-only SQL executor (usable outside the tool loop).
 - `RubySage::Tools::Base`, `Tools::DatabaseQuery`, `Tools::DescribeTable`, `Tools::Registry`.

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RubySage — Chat Turns</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: #f5f5f5; color: #111; }
+    .rs-admin-header { background: #1a1a1a; color: #fff; padding: 16px 24px; display: flex; align-items: center; gap: 12px; }
+    .rs-admin-header h1 { font-size: 18px; font-weight: 600; }
+    .rs-admin-header .rs-admin-badge { font-size: 11px; background: #444; padding: 2px 8px; border-radius: 12px; }
+    .rs-admin-body { max-width: 1100px; margin: 32px auto; padding: 0 16px; }
+    .rs-admin-card { background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+    .rs-admin-card h2 { font-size: 14px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 16px; }
+    .rs-admin-stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+    .rs-admin-stat { background: #f9f9f9; border: 1px solid #eee; border-radius: 6px; padding: 12px; text-align: center; }
+    .rs-admin-stat-value { font-size: 24px; font-weight: 700; line-height: 1; }
+    .rs-admin-stat-label { font-size: 11px; color: #888; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+    .rs-admin-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .rs-admin-table th { text-align: left; font-size: 12px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 8px; border-bottom: 1px solid #eee; }
+    .rs-admin-table td { padding: 10px 8px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+    .rs-admin-table tr:last-child td { border-bottom: 0; }
+    .rs-badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    .rs-badge-completed { background: #d1fae5; color: #065f46; }
+    .rs-badge-failed   { background: #fee2e2; color: #991b1b; }
+    .rs-badge-mode-developer { background: #dbeafe; color: #1e40af; }
+    .rs-badge-mode-admin     { background: #ede9fe; color: #5b21b6; }
+    .rs-badge-mode-user      { background: #fef3c7; color: #92400e; }
+    .rs-admin-question { font-weight: 500; max-width: 480px; }
+    .rs-admin-empty { text-align: center; color: #888; padding: 32px; font-size: 14px; }
+    .rs-admin-filters { display: flex; gap: 8px; margin-bottom: 16px; }
+    .rs-admin-filter-link { font-size: 12px; padding: 4px 10px; border: 1px solid #ddd; border-radius: 6px; color: #555; text-decoration: none; }
+    .rs-admin-filter-link.active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+    .rs-admin-link { color: #1a1a1a; text-decoration: none; }
+    .rs-admin-link:hover { text-decoration: underline; }
+    .rs-tools-pill { display: inline-block; font-size: 11px; background: #f3e8ff; color: #6b21a8; padding: 2px 6px; border-radius: 10px; margin-left: 4px; }
+  </style>
+</head>
+<body>
+
+<header class="rs-admin-header">
+  <h1>RubySage</h1>
+  <span class="rs-admin-badge">Chat Turns</span>
+</header>
+
+<div class="rs-admin-body">
+
+  <div class="rs-admin-card">
+    <h2>Last 30 days</h2>
+    <div class="rs-admin-stat-grid">
+      <div class="rs-admin-stat"><div class="rs-admin-stat-value"><%= @stats[:total] %></div><div class="rs-admin-stat-label">Turns</div></div>
+      <div class="rs-admin-stat"><div class="rs-admin-stat-value"><%= @stats[:failed] %></div><div class="rs-admin-stat-label">Failed</div></div>
+      <div class="rs-admin-stat"><div class="rs-admin-stat-value"><%= @stats[:with_tool_calls] %></div><div class="rs-admin-stat-label">Used tools</div></div>
+      <div class="rs-admin-stat"><div class="rs-admin-stat-value"><%= number_with_delimiter(@stats[:input_tokens].to_i) %></div><div class="rs-admin-stat-label">Input tokens</div></div>
+      <div class="rs-admin-stat"><div class="rs-admin-stat-value"><%= number_with_delimiter(@stats[:output_tokens].to_i) %></div><div class="rs-admin-stat-label">Output tokens</div></div>
+      <div class="rs-admin-stat"><div class="rs-admin-stat-value"><%= number_with_delimiter(@stats[:cache_read_tokens].to_i) %></div><div class="rs-admin-stat-label">Cache read</div></div>
+    </div>
+  </div>
+
+  <div class="rs-admin-card">
+    <h2>Filter</h2>
+    <div class="rs-admin-filters">
+      <%= link_to "All", ruby_sage.admin_chat_turns_path, class: "rs-admin-filter-link #{'active' if @filters[:mode].nil? && @filters[:status].nil? && @filters[:tools].nil?}" %>
+      <% %w[developer admin user].each do |mode| %>
+        <%= link_to mode.titleize, ruby_sage.admin_chat_turns_path(mode: mode), class: "rs-admin-filter-link #{'active' if @filters[:mode] == mode}" %>
+      <% end %>
+      <%= link_to "Failed", ruby_sage.admin_chat_turns_path(status: "failed"), class: "rs-admin-filter-link #{'active' if @filters[:status] == 'failed'}" %>
+      <%= link_to "With tool calls", ruby_sage.admin_chat_turns_path(tools: "1"), class: "rs-admin-filter-link #{'active' if @filters[:tools] == '1'}" %>
+    </div>
+
+    <% if @turns.empty? %>
+      <p class="rs-admin-empty">No chat turns recorded yet. Ask a question via the widget to populate this view.</p>
+    <% else %>
+      <table class="rs-admin-table">
+        <thead>
+          <tr>
+            <th>When</th>
+            <th>Mode</th>
+            <th>Question</th>
+            <th>Status</th>
+            <th>Tokens</th>
+            <th>Iter</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @turns.each do |turn| %>
+            <tr>
+              <td><%= turn.created_at.strftime("%b %-d %H:%M") %></td>
+              <td><span class="rs-badge rs-badge-mode-<%= turn.mode %>"><%= turn.mode %></span></td>
+              <td class="rs-admin-question">
+                <%= truncate(turn.question, length: 80) %>
+                <% if turn.used_tools? %><span class="rs-tools-pill">tools</span><% end %>
+              </td>
+              <td><span class="rs-badge rs-badge-<%= turn.status %>"><%= turn.status %></span></td>
+              <td><%= turn.total_tokens %></td>
+              <td><%= turn.iterations || "—" %></td>
+              <td><%= link_to "View", ruby_sage.admin_chat_turn_path(turn), class: "rs-admin-link" %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% end %>
+  </div>
+
+</div>
+</body>
+</html>

@@ -51,6 +51,16 @@ RubySage.configure do |config|
   #   end
   # }
 
+  # === Chat turn audit + usage tracking ===
+  # When true (default), every chat-widget turn writes a RubySage::ChatTurn
+  # row with the question, answer, mode, tool calls (incl. SQL the model ran
+  # in :admin mode), citations, and token usage. Browse at
+  # /ruby_sage/admin/chat_turns.
+  # config.persist_chat_turns = true
+  #
+  # Optionally identify who asked. Should return an ActiveRecord object.
+  # config.identify_asker = ->(controller) { controller.current_user }
+
   # === Database queries (admin "magic search") ===
   # When :admin mode is on AND this is true, the chat loop can run read-only
   # SELECTs against your DB to answer live-data questions

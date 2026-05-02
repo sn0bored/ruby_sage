@@ -17,4 +17,8 @@ RSpec.configure do |config|
   ensure
     ActiveRecord::Migration.verbose = previous_verbosity
   end
+
+  config.before do
+    RubySage::ChatTurn.delete_all if defined?(RubySage::ChatTurn)
+  end
 end
