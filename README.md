@@ -276,10 +276,26 @@ end
 
 CI tests across the matrix. See `.github/workflows/ci.yml`.
 
+## Compared to alternatives
+
+| Tool | What it knows about your code | Where it lives | Trust model |
+|---|---|---|---|
+| **RubySage** | Indexed per-file artifacts of YOUR app, with citations | In your Rails app's DB | You own the data |
+| Cursor codebase chat | Embeddings of YOUR repo (Cursor-hosted) | Cursor IDE | Cursor sees your code |
+| Continue / Aider | Whatever it can fit in context per question | Editor sidebar | Provider sees your code |
+| ChatGPT / Claude.ai (with file uploads) | Whatever you paste | Browser | Provider sees your code |
+| Sourcegraph Cody | Indexed embeddings | Sourcegraph-hosted or self-hosted | Sourcegraph sees code unless self-hosted |
+
+RubySage is the only one of these where the chat widget runs *inside your
+production Rails app*, lets non-developer admins and end users ask questions
+in their own modes, and runs read-only SQL against your database to answer
+data questions ("who is the author of post 47?"). The trade-off: it's
+Rails-only.
+
 ## Roadmap
 
 - v1.5: streaming responses (SSE), Propshaft asset pipeline, optional pgvector embeddings.
-- v2: hosted RubySage Cloud — shared snapshots across dev/prod environments, no token spend on your end.
+- v2: hosted RubySage Cloud — shared snapshots across dev/prod environments, no token spend on your end. See [`SAAS_PLAN.md`](./SAAS_PLAN.md) for the design sketch.
 
 ## Contributing
 

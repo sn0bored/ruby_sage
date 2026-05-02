@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "summaries": {
+    "app/models/user.rb": "The User model represents a signed-in account, authenticated via Devise. Belongs_to many Memberships and through them many Organizations, supporting the multi-tenant model. Public methods include `admin?` (delegates to the membership flag), `display_name` (falls back to email if name is blank), and a `recent` scope sorted by created_at desc.",
+    "app/controllers/posts_controller.rb": "Standard RESTful PostsController scoped to the current organization. Loads @posts via Pundit's policy_scope in #index, authorizes individual records in #show, #edit, #update, #destroy. The #create action delegates to PostCreationService rather than calling Post.create! directly.",
+    "app/services/post_creation_service.rb": "Wraps the post-creation workflow: validates the params, creates the Post record inside a transaction, attaches uploaded images via Active Storage, and enqueues NotifyFollowersJob. Returns a Result struct so the controller can branch on `success?` vs `failure_message`.",
+    "config/routes.rb": "Mounts the public marketing pages at root, the Devise authentication routes under /users, RESTful resources for posts and comments under /organizations/:organization_id, the admin namespace at /admin (limited to users where admin? returns true), and the RubySage chat widget engine at /ruby_sage.",
+    "db/schema.rb": "Schema dump for the application. Core tables: users (Devise), organizations + memberships for multi-tenancy, posts and comments belonging to organizations, and the standard Solid Queue / Cache / Cable infrastructure tables. Also includes ruby_sage_scans and ruby_sage_artifacts for the codebase chat engine."
+  },
+  "audience_overrides": {
+    "app/views/help/getting_started.html.erb": ["developer", "admin", "user"],
+    "app/views/help/billing.html.erb": ["developer", "admin", "user"]
+  }
+}
