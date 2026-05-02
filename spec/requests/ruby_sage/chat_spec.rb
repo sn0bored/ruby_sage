@@ -138,6 +138,48 @@ RSpec.describe "RubySage chat", type: :request do
     end
   end
 
+  context "with ChatTurn persistence enabled (default)" do
+    before do
+      allow_access
+      seed_completed_scan
+      stub_provider(provider_response)
+    end
+
+    it "writes a completed ChatTurn row with question, answer, and usage" do
+      expect do
+        post "/ruby_sage/chat", params: { message: "what does PostsController do?" }, as: :json
+      end.to change(RubySage::ChatTurn, :count).by(1)
+
+      turn = RubySage::ChatTurn.last
+      expect(turn.status).to eq("completed")
+      expect(turn.question).to eq("what does PostsController do?")
+      expect(turn.answer).to eq("PostsController#index lists posts.")
+      expect(turn.input_tokens).to eq(12)
+      expect(turn.output_tokens).to eq(7)
+      expect(turn.mode).to eq("developer")
+    end
+
+    it "records a failed turn with the error message when the provider fails" do
+      stub_failing_provider
+
+      expect do
+        post "/ruby_sage/chat", params: { message: "any" }, as: :json
+      end.to change(RubySage::ChatTurn, :count).by(1)
+
+      turn = RubySage::ChatTurn.last
+      expect(turn.status).to eq("failed")
+      expect(turn.error_message).to eq("upstream failed")
+    end
+
+    it "skips persistence when persist_chat_turns is false" do
+      RubySage.configure { |config| config.persist_chat_turns = false }
+
+      expect do
+        post "/ruby_sage/chat", params: { message: "any" }, as: :json
+      end.not_to change(RubySage::ChatTurn, :count)
+    end
+  end
+
   context "with mode: :admin and enable_database_queries" do
     before do
       RubySage.configure do |c|
