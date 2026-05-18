@@ -13,7 +13,10 @@ module RubySage
   #   result[:artifacts]   # auto-summarized code
   #   result[:knowledge]   # human-curated how-tos
   #   result[:citations]   # mixed, score-sorted
-  class Retriever
+  # Scoring + ranking sit alongside route resolution and citation shaping here.
+  # Splitting into smaller classes would fragment the read order of a single
+  # algorithmic pipeline, so we accept the class size.
+  class Retriever # rubocop:disable Metrics/ClassLength
     DEFAULT_LIMIT = 10
     PAGE_CONTEXT_BOOST = 2.5
 
@@ -157,24 +160,27 @@ module RubySage
     end
 
     def citation_for(item, score)
-      case item
-      when KnowledgeChunk
-        {
-          kind: "knowledge",
-          slug: item.slug,
-          title: item.title,
-          tags: Array(item.tags),
-          score: score.round(2),
-          snippet: knowledge_snippet(item)
-        }
-      else
-        {
-          kind: item.kind || "artifact",
-          path: item.path,
-          score: score.round(2),
-          snippet: artifact_snippet(item)
-        }
-      end
+      item.is_a?(KnowledgeChunk) ? knowledge_citation(item, score) : artifact_citation(item, score)
+    end
+
+    def knowledge_citation(chunk, score)
+      {
+        kind: "knowledge",
+        slug: chunk.slug,
+        title: chunk.title,
+        tags: Array(chunk.tags),
+        score: score.round(2),
+        snippet: knowledge_snippet(chunk)
+      }
+    end
+
+    def artifact_citation(artifact, score)
+      {
+        kind: artifact.kind || "artifact",
+        path: artifact.path,
+        score: score.round(2),
+        snippet: artifact_snippet(artifact)
+      }
     end
 
     def artifact_snippet(artifact)

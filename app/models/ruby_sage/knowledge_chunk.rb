@@ -37,8 +37,9 @@ module RubySage
     before_validation :default_audiences
     before_validation :default_position, on: :create
 
+    SLUG_FORMAT_MESSAGE = "may only contain lowercase letters, numbers, and dashes"
     validates :slug, presence: true, uniqueness: { case_sensitive: false },
-                     format: { with: /\A[a-z0-9-]+\z/, message: "may only contain lowercase letters, numbers, and dashes" }
+                     format: { with: /\A[a-z0-9-]+\z/, message: SLUG_FORMAT_MESSAGE }
     validates :title, presence: true, length: { maximum: 255 }
     validates :body, presence: true
     validates :source, inclusion: { in: SOURCES }
@@ -130,11 +131,14 @@ module RubySage
       errors.add(:audiences, "contains unsupported values: #{invalid.join(', ')}")
     end
 
+    # Position swaps deliberately skip validation: position is a pure ordering
+    # field, and running the full validation chain twice on neighbor rows would
+    # surface unrelated errors that have nothing to do with reordering.
     def swap_position_with(other)
       transaction do
         my_pos = position
-        update_column(:position, other.position)
-        other.update_column(:position, my_pos)
+        update_column(:position, other.position) # rubocop:disable Rails/SkipsModelValidations
+        other.update_column(:position, my_pos)   # rubocop:disable Rails/SkipsModelValidations
       end
     end
   end

@@ -10,24 +10,18 @@ RSpec.describe RubySage::Knowledge::Loader do
 
   it "loads entries from each YAML file in the directory" do
     Dir.mktmpdir do |dir|
-      File.write(File.join(dir, "a.yml"), <<~YAML)
-        - slug: alpha
-          title: Alpha
-          body: First.
-      YAML
-      File.write(File.join(dir, "b.yml"), <<~YAML)
-        - slug: bravo
-          title: Bravo
-          body: Second.
-          audiences: [admin]
-      YAML
+      write_yaml(dir, "a.yml", "- slug: alpha\n  title: Alpha\n  body: First.\n")
+      write_yaml(dir, "b.yml", "- slug: bravo\n  title: Bravo\n  body: Second.\n  audiences: [admin]\n")
 
       entries = described_class.new(path: dir).load
 
-      slugs = entries.map { |e| e["slug"] }
-      expect(slugs).to contain_exactly("alpha", "bravo")
+      expect(entries.map { |e| e["slug"] }).to contain_exactly("alpha", "bravo")
       expect(entries.find { |e| e["slug"] == "bravo" }["audiences"]).to eq(["admin"])
     end
+  end
+
+  def write_yaml(dir, name, contents)
+    File.write(File.join(dir, name), contents)
   end
 
   it "accepts the entries-hash shape" do
