@@ -170,9 +170,14 @@
   function renderAnswer(node, response) {
     node.textContent = "";
 
-    var answer = document.createElement("p");
+    var answer = document.createElement("div");
     answer.className = "ruby-sage-answer";
-    answer.textContent = response.answer || "(no answer)";
+    if (response.answer_html) {
+      // Server rendered the markdown to HTML via RubySage::MarkdownRenderer.
+      answer.innerHTML = response.answer_html;
+    } else {
+      answer.textContent = response.answer || "(no answer)";
+    }
     node.appendChild(answer);
 
     var citations = (response.citations || []).filter(function(c) { return c.snippet; });

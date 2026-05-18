@@ -143,6 +143,7 @@ module RubySage
     def response_payload(result, retrieval, tool_registry)
       payload = {
         answer: result[:answer],
+        answer_html: RubySage::MarkdownRenderer.render(result[:answer]),
         citations: retrieval[:citations],
         scan_id: retrieval[:scan_id],
         usage: result[:usage]
