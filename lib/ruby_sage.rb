@@ -21,6 +21,8 @@ require "ruby_sage/doctor"
 require "ruby_sage/retriever"
 require "ruby_sage/onboarding_generator"
 require "ruby_sage/cli_chat"
+require "ruby_sage/knowledge"
+require "ruby_sage/markdown_renderer"
 
 # RubySage exposes a Rails engine for scanning a host application and serving
 # code-aware assistance.

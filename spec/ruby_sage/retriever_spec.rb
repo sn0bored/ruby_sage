@@ -16,7 +16,7 @@ RSpec.describe RubySage::Retriever do
   it "returns an empty result when no completed scan exists" do
     result = described_class.new.call(query: "posts")
 
-    expect(result).to eq(artifacts: [], citations: [], scan_id: nil)
+    expect(result).to eq(artifacts: [], knowledge: [], citations: [], scan_id: nil)
   end
 
   it "tokenizes query text" do

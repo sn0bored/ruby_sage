@@ -59,16 +59,30 @@ module RubySage
       page_context.permit(:url, :title).to_h.symbolize_keys
     end
 
-    def build_artifact_context(artifacts)
-      return "" if artifacts.empty?
+    def build_context(retrieval)
+      sections = []
+      sections << knowledge_section(retrieval[:knowledge]) if retrieval[:knowledge]&.any?
+      sections << artifact_section(retrieval[:artifacts]) if retrieval[:artifacts]&.any?
+      sections.join("\n\n=====\n\n")
+    end
 
+    def knowledge_section(chunks)
+      blocks = chunks.map do |chunk|
+        tags = Array(chunk.tags).join(", ")
+        "## #{chunk.title} (slug: #{chunk.slug}#{", tags: #{tags}" unless tags.empty?})\n\n#{chunk.body}\n"
+      end
+
+      "Curated knowledge (human-authored — prefer these when answering):\n\n#{blocks.join("\n---\n\n")}"
+    end
+
+    def artifact_section(artifacts)
       blocks = artifacts.map do |artifact|
         "## #{artifact.path} (#{artifact.kind})\n\n" \
           "Public symbols: #{Array(artifact.public_symbols).join(', ')}\n\n" \
           "Summary:\n#{artifact.summary || '(no summary available)'}\n"
       end
 
-      "Codebase context:\n\n#{blocks.join("\n---\n\n")}"
+      "Codebase context (auto-summarized — use when no curated knowledge fits):\n\n#{blocks.join("\n---\n\n")}"
     end
 
     # Prepends page context to the first user message so the provider sees it
@@ -92,7 +106,7 @@ module RubySage
 
     def run_chat(messages, page_context, retrieval, tool_registry)
       system_prompt = system_prompt_for(tool_registry)
-      cached_context = build_artifact_context(retrieval[:artifacts])
+      cached_context = build_context(retrieval)
       annotated = messages_with_context(messages, page_context)
 
       return single_shot(system_prompt, cached_context, annotated) if tool_registry.empty?

@@ -1,0 +1,40 @@
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: #fafafa; color: #111; }
+  .rs-help-header { background: #1a1a1a; color: #fff; padding: 20px 24px; }
+  .rs-help-header .rs-help-inner { max-width: 980px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .rs-help-header h1 { font-size: 20px; font-weight: 600; }
+  .rs-help-header h1 small { font-weight: 400; opacity: 0.7; font-size: 14px; margin-left: 8px; }
+  .rs-help-search { flex: 1 1 280px; max-width: 420px; }
+  .rs-help-search input { width: 100%; padding: 10px 14px; font-size: 14px; border: 0; border-radius: 6px; background: #2a2a2a; color: #fff; font-family: inherit; }
+  .rs-help-search input::placeholder { color: #888; }
+  .rs-help-body { max-width: 980px; margin: 32px auto; padding: 0 16px; }
+  .rs-help-aside { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 24px; }
+  .rs-help-aside a { font-size: 12px; padding: 4px 10px; border-radius: 12px; background: #fff; border: 1px solid #e5e5e5; color: #475569; text-decoration: none; }
+  .rs-help-aside a.rs-active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+  .rs-help-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+  .rs-help-card { background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; padding: 18px; text-decoration: none; color: #111; transition: border-color 0.1s; display: block; }
+  .rs-help-card:hover { border-color: #1a1a1a; }
+  .rs-help-card h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; line-height: 1.35; }
+  .rs-help-card p { font-size: 13px; color: #666; line-height: 1.45; }
+  .rs-help-card .rs-help-tags { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 4px; }
+  .rs-help-card .rs-help-tag { font-size: 11px; background: #f1f5f9; color: #475569; padding: 2px 7px; border-radius: 12px; }
+  .rs-help-empty { text-align: center; color: #888; padding: 48px 16px; font-size: 14px; background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; }
+  .rs-help-show { background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; padding: 32px; }
+  .rs-help-show h1 { font-size: 26px; font-weight: 700; margin-bottom: 8px; line-height: 1.25; }
+  .rs-help-show .rs-help-meta { font-size: 12px; color: #888; margin-bottom: 20px; }
+  .rs-help-show .rs-help-meta .rs-help-tag { font-size: 11px; background: #f1f5f9; color: #475569; padding: 2px 7px; border-radius: 12px; margin-right: 4px; }
+  .rs-help-show .rs-help-extras { background: #f9fafb; border: 1px solid #e5e5e5; border-radius: 6px; padding: 12px 16px; margin-bottom: 20px; font-size: 13px; }
+  .rs-help-show .rs-help-body { font-size: 15px; line-height: 1.65; color: #222; }
+  .rs-help-show .rs-help-body h1, .rs-help-show .rs-help-body h2, .rs-help-show .rs-help-body h3 { margin: 22px 0 10px; }
+  .rs-help-show .rs-help-body h2 { font-size: 20px; }
+  .rs-help-show .rs-help-body h3 { font-size: 17px; }
+  .rs-help-show .rs-help-body p, .rs-help-show .rs-help-body ul, .rs-help-show .rs-help-body ol { margin: 10px 0; }
+  .rs-help-show .rs-help-body ul, .rs-help-show .rs-help-body ol { padding-left: 24px; }
+  .rs-help-show .rs-help-body pre { background: #f6f8fa; padding: 14px; border-radius: 6px; overflow-x: auto; font-family: ui-monospace, monospace; font-size: 13px; line-height: 1.5; margin: 12px 0; }
+  .rs-help-show .rs-help-body code { background: #f6f8fa; padding: 1px 4px; border-radius: 3px; font-family: ui-monospace, monospace; font-size: 13px; }
+  .rs-help-show .rs-help-body pre code { background: transparent; padding: 0; }
+  .rs-help-show .rs-help-body a { color: #1d4ed8; }
+  .rs-help-back { display: inline-block; font-size: 13px; color: #475569; text-decoration: none; margin-bottom: 16px; }
+  .rs-help-back:hover { color: #111; }
+</style>

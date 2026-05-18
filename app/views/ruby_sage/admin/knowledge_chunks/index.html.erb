@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RubySage — Knowledge</title>
+  <%= render "styles" %>
+</head>
+<body>
+
+<header class="rs-admin-header">
+  <h1>RubySage</h1>
+  <span class="rs-admin-badge">Knowledge</span>
+</header>
+
+<div class="rs-admin-body">
+  <% if notice.present? %><div class="rs-admin-notice"><%= notice %></div><% end %>
+  <% if alert.present? %><div class="rs-admin-alert"><%= alert %></div><% end %>
+
+  <div class="rs-admin-actions">
+    <%= link_to "New entry", ruby_sage.new_admin_knowledge_chunk_path, class: "rs-admin-btn" %>
+    <%= button_to "Sync YAML files", ruby_sage.sync_yaml_admin_knowledge_chunks_path,
+                  class: "rs-admin-btn rs-admin-btn-secondary",
+                  method: :post,
+                  form: { style: "display: inline" } %>
+    <%= link_to "← Back to scans", ruby_sage.admin_scans_path, class: "rs-admin-btn rs-admin-btn-secondary" %>
+  </div>
+
+  <div class="rs-admin-card">
+    <h2><%= @chunks.size %> entries</h2>
+
+    <% if @chunks.empty? %>
+      <p class="rs-admin-empty">
+        No knowledge entries yet. Create one above, or drop YAML files under
+        <code>config/ruby_sage/knowledge/</code> and click "Sync YAML files".
+      </p>
+    <% else %>
+      <table class="rs-admin-table">
+        <thead>
+          <tr>
+            <th style="width: 60px;">Order</th>
+            <th>Title</th>
+            <th>Audiences</th>
+            <th>Tags</th>
+            <th>Source</th>
+            <th>Visibility</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @chunks.each do |chunk| %>
+            <tr>
+              <td style="white-space: nowrap;">
+                <%= button_to "↑", ruby_sage.move_up_admin_knowledge_chunk_path(chunk),
+                              method: :post, class: "rs-admin-btn rs-admin-btn-secondary rs-admin-btn-sm",
+                              form: { style: "display: inline" } %>
+                <%= button_to "↓", ruby_sage.move_down_admin_knowledge_chunk_path(chunk),
+                              method: :post, class: "rs-admin-btn rs-admin-btn-secondary rs-admin-btn-sm",
+                              form: { style: "display: inline" } %>
+              </td>
+              <td>
+                <%= link_to chunk.title, ruby_sage.admin_knowledge_chunk_path(chunk) %>
+                <div style="font-size: 11px; color: #999; margin-top: 2px;"><code><%= chunk.slug %></code></div>
+              </td>
+              <td>
+                <% Array(chunk.audiences).each do |a| %>
+                  <span class="rs-badge rs-badge-audience"><%= a %></span>
+                <% end %>
+              </td>
+              <td>
+                <div class="rs-tags">
+                  <% Array(chunk.tags).each do |tag| %><span class="rs-tag"><%= tag %></span><% end %>
+                </div>
+              </td>
+              <td>
+                <span class="rs-badge rs-badge-<%= chunk.source == 'yaml' ? 'yaml' : 'admin' %>">
+                  <%= chunk.source == "yaml" ? "YAML" : "Admin" %>
+                </span>
+              </td>
+              <td>
+                <span class="rs-badge rs-badge-<%= chunk.published? ? 'pub' : 'draft' %>">
+                  <%= chunk.published? ? "Published" : "Draft" %>
+                </span>
+              </td>
+              <td style="white-space: nowrap; text-align: right;">
+                <%= link_to "View", ruby_sage.admin_knowledge_chunk_path(chunk),
+                            class: "rs-admin-btn rs-admin-btn-secondary rs-admin-btn-sm" %>
+                <% if chunk.source == "admin_ui" %>
+                  <%= link_to "Edit", ruby_sage.edit_admin_knowledge_chunk_path(chunk),
+                              class: "rs-admin-btn rs-admin-btn-secondary rs-admin-btn-sm" %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% end %>
+  </div>
+</div>
+</body>
+</html>

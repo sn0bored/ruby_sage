@@ -30,6 +30,7 @@ module RubySage
       check_user_mode_safety
       check_database_queries_safety
       check_chat_turn_persistence
+      check_knowledge_base_present
     ].freeze
 
     # @param config [RubySage::Configuration]
@@ -157,6 +158,28 @@ module RubySage
         "persist_chat_turns is on but the ruby_sage_chat_turns table is missing.",
         "Run `bundle exec rails ruby_sage:install:migrations && rails db:migrate`."
       )
+    end
+
+    def check_knowledge_base_present
+      return ok_finding("knowledge", "Knowledge layer not relevant in :#{config.mode} mode") unless %i[admin
+                                                                                                       user].include?(config.mode)
+      return ok_finding("knowledge", "ruby_sage_knowledge_chunks table not present yet") unless knowledge_table_exists?
+
+      count = KnowledgeChunk.published.count
+      return ok_finding("knowledge", "#{count} published knowledge entries") if count.positive?
+
+      warn_finding(
+        "knowledge",
+        "Mode is :#{config.mode} but zero published knowledge entries exist.",
+        "Add YAML files under #{Knowledge.path} and run `rake ruby_sage:knowledge:sync`, " \
+        "or create entries via /ruby_sage/admin/knowledge."
+      )
+    end
+
+    def knowledge_table_exists?
+      defined?(KnowledgeChunk) && KnowledgeChunk.table_exists?
+    rescue StandardError
+      false
     end
 
     def either(check, message, condition)

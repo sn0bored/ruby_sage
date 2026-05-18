@@ -5,12 +5,14 @@ require "uri"
 
 module RubySage
   # Given a natural-language query and optional page URL, retrieves the most
-  # relevant artifacts from the latest completed scan, with citations.
+  # relevant artifacts AND curated knowledge chunks for the configured mode,
+  # with citations.
   #
   # @example
-  #   result = RubySage::Retriever.new.call(query: "how does donor matching work?")
-  #   result[:artifacts]
-  #   result[:citations]
+  #   result = RubySage::Retriever.new.call(query: "how do I run the report?")
+  #   result[:artifacts]   # auto-summarized code
+  #   result[:knowledge]   # human-curated how-tos
+  #   result[:citations]   # mixed, score-sorted
   class Retriever
     DEFAULT_LIMIT = 10
     PAGE_CONTEXT_BOOST = 2.5
@@ -18,66 +20,71 @@ module RubySage
     STOPWORDS = Set.new(%w[a an the is are was were in on at to of for and or but that this it we our my your]).freeze
     private_constant :STOPWORDS
 
-    # Initializes a retriever for a scan.
-    #
-    # @param scan [RubySage::Scan, nil] scan to retrieve from.
-    # @param limit [Integer] maximum number of artifacts to return.
-    # @param mode [Symbol, nil] audience mode (+:developer+, +:admin+, +:user+).
-    #   Defaults to the configured RubySage mode. Artifacts whose audience list
-    #   does not include this mode are excluded.
-    # @return [RubySage::Retriever]
+    # @param scan [RubySage::Scan, nil]
+    # @param limit [Integer] total citation budget across artifacts + knowledge.
+    # @param mode [Symbol, nil]
     def initialize(scan: Scan.latest_completed.first, limit: DEFAULT_LIMIT, mode: nil)
       @scan = scan
       @limit = limit
       @mode = (mode || RubySage.configuration.mode || :developer).to_sym
     end
 
-    # Retrieves relevant artifacts and citations.
-    #
-    # @param query [String] natural-language question.
-    # @param page_context [Hash, nil] optional page context with :url and :title.
-    # @return [Hash] artifacts, citations, and scan id.
+    # @param query [String]
+    # @param page_context [Hash, nil]
+    # @return [Hash]
     def call(query:, page_context: nil)
-      return { artifacts: [], citations: [], scan_id: nil } if @scan.nil?
-
       tokens = tokenize(query)
-      route_artifact_ids = artifact_ids_for_route(page_context)
-      top = score(tokens: tokens, route_artifact_ids: route_artifact_ids).first(@limit)
+
+      artifact_pairs = retrieve_artifacts(tokens: tokens, page_context: page_context)
+      knowledge_pairs = retrieve_knowledge(tokens: tokens)
+
+      mixed = (artifact_pairs + knowledge_pairs).sort_by { |_item, score| -score }.first(@limit)
 
       {
-        artifacts: top.map(&:first),
-        citations: top.map { |artifact, artifact_score| citation_for(artifact, artifact_score) },
-        scan_id: @scan.id
+        artifacts: mixed.map(&:first).grep(Artifact),
+        knowledge: mixed.map(&:first).grep(KnowledgeChunk),
+        citations: mixed.map { |item, score| citation_for(item, score) },
+        scan_id: @scan&.id
       }
     end
 
     private
 
+    def retrieve_artifacts(tokens:, page_context:)
+      return [] if @scan.nil?
+
+      route_ids = Set.new(artifact_ids_for_route(page_context))
+      candidates = @scan.artifacts.to_a.select { |artifact| artifact.visible_in_mode?(@mode) }
+
+      candidates.each_with_object([]) do |artifact, scored|
+        artifact_score = score_artifact(artifact, tokens)
+        artifact_score *= PAGE_CONTEXT_BOOST if route_ids.include?(artifact.id)
+        scored << [artifact, artifact_score] if artifact_score >= 1.0
+      end
+    end
+
+    def retrieve_knowledge(tokens:)
+      return [] unless knowledge_table_exists?
+
+      boost = RubySage.configuration.knowledge_boost.to_f
+      KnowledgeChunk.published.to_a.each_with_object([]) do |chunk, scored|
+        next unless chunk.visible_in_mode?(@mode)
+
+        chunk_score = score_knowledge(chunk, tokens) * boost
+        scored << [chunk, chunk_score] if chunk_score >= 1.0
+      end
+    end
+
+    def knowledge_table_exists?
+      ActiveRecord::Base.connection.data_source_exists?("ruby_sage_knowledge_chunks")
+    rescue StandardError
+      false
+    end
+
     def tokenize(text)
       text.to_s.downcase.split(/\W+/).reject do |token|
         token.length < 2 || STOPWORDS.include?(token)
       end
-    end
-
-    def score(tokens:, route_artifact_ids:)
-      route_ids = Set.new(route_artifact_ids)
-      candidates = @scan.artifacts.to_a.select { |artifact| artifact.visible_in_mode?(@mode) }
-
-      scored = candidates.each_with_object([]) do |artifact, scored_artifacts|
-        artifact_score = score_artifact(artifact, tokens)
-        artifact_score *= PAGE_CONTEXT_BOOST if route_ids.include?(artifact.id)
-
-        scored_artifacts << [artifact, artifact_score] if artifact_score >= 1.0
-      end
-
-      scored.sort { |left, right| compare_scores(left, right) }
-    end
-
-    def compare_scores(left, right)
-      score_comparison = right.last <=> left.last
-      return score_comparison unless score_comparison.zero?
-
-      left.first.path <=> right.first.path
     end
 
     def score_artifact(artifact, tokens)
@@ -86,9 +93,15 @@ module RubySage
         score_text(tokens, artifact.path, 1.5)
     end
 
+    def score_knowledge(chunk, tokens)
+      score_text(tokens, chunk.title, 3.0) +
+        score_text(tokens, chunk.tags, 2.5) +
+        score_text(tokens, chunk.body, 1.0) +
+        score_text(tokens, chunk.slug, 1.5)
+    end
+
     def score_text(tokens, value, weight)
       terms = searchable_terms(value)
-
       tokens.inject(0.0) do |total, token|
         token_matches_terms?(token, terms) ? total + weight : total
       end
@@ -103,6 +116,8 @@ module RubySage
     end
 
     def artifact_ids_for_route(page_context)
+      return [] if @scan.nil?
+
       path = page_context_path(page_context)
       return [] if path.nil?
 
@@ -141,20 +156,40 @@ module RubySage
       artifact.path == controller_path || artifact.path.start_with?(view_prefix)
     end
 
-    def citation_for(artifact, artifact_score)
-      {
-        path: artifact.path,
-        kind: artifact.kind,
-        score: artifact_score.round(2),
-        snippet: snippet_for(artifact)
-      }
+    def citation_for(item, score)
+      case item
+      when KnowledgeChunk
+        {
+          kind: "knowledge",
+          slug: item.slug,
+          title: item.title,
+          tags: Array(item.tags),
+          score: score.round(2),
+          snippet: knowledge_snippet(item)
+        }
+      else
+        {
+          kind: item.kind || "artifact",
+          path: item.path,
+          score: score.round(2),
+          snippet: artifact_snippet(item)
+        }
+      end
     end
 
-    def snippet_for(artifact)
+    def artifact_snippet(artifact)
       summary = artifact.summary.to_s.strip
       return artifact.path if summary.empty?
 
       summary.split(/(?<=[.!?])\s+/).first
+    end
+
+    def knowledge_snippet(chunk)
+      body = chunk.body.to_s.strip
+      return chunk.title if body.empty?
+
+      first_sentence = body.split(/\n\n|(?<=[.!?])\s+/).first.to_s
+      first_sentence.length > 200 ? "#{first_sentence[0, 197]}..." : first_sentence
     end
   end
 end

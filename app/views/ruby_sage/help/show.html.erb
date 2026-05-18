@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= @chunk.title %> — Help</title>
+  <%= render "styles" %>
+</head>
+<body>
+
+<header class="rs-help-header">
+  <div class="rs-help-inner">
+    <h1>Help</h1>
+    <form class="rs-help-search" method="get" action="<%= ruby_sage.help_index_path %>">
+      <input type="search" name="q" placeholder="Search how-tos…">
+    </form>
+  </div>
+</header>
+
+<div class="rs-help-body">
+  <%= link_to "← Back to help", ruby_sage.help_index_path, class: "rs-help-back" %>
+
+  <article class="rs-help-show">
+    <h1><%= @chunk.title %></h1>
+    <div class="rs-help-meta">
+      <% Array(@chunk.tags).each do |tag| %><span class="rs-help-tag"><%= tag %></span><% end %>
+      <% if Array(@chunk.tags).any? %> · <% end %>
+      Updated <%= @chunk.updated_at.strftime("%b %-d, %Y") %>
+    </div>
+
+    <% if @chunk.url.present? || @chunk.video_url.present? %>
+      <div class="rs-help-extras">
+        <% if @chunk.url.present? %>
+          <p>🔗 <%= link_to @chunk.url, @chunk.url, target: "_blank", rel: "noopener" %></p>
+        <% end %>
+        <% if @chunk.video_url.present? %>
+          <p>🎥 <%= link_to "Watch video walkthrough", @chunk.video_url, target: "_blank", rel: "noopener" %></p>
+        <% end %>
+      </div>
+    <% end %>
+
+    <div class="rs-help-body"><%= RubySage::MarkdownRenderer.render(@chunk.body).html_safe %></div>
+  </article>
+</div>
+</body>
+</html>

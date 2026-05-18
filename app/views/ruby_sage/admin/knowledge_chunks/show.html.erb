@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RubySage — <%= @chunk.title %></title>
+  <%= render "styles" %>
+</head>
+<body>
+<header class="rs-admin-header">
+  <h1>RubySage</h1>
+  <span class="rs-admin-badge">Knowledge entry</span>
+</header>
+<div class="rs-admin-body">
+  <% if notice.present? %><div class="rs-admin-notice"><%= notice %></div><% end %>
+  <% if alert.present? %><div class="rs-admin-alert"><%= alert %></div><% end %>
+
+  <div class="rs-admin-actions">
+    <%= link_to "← All entries", ruby_sage.admin_knowledge_chunks_path, class: "rs-admin-btn rs-admin-btn-secondary" %>
+    <% if @chunk.source == "admin_ui" %>
+      <%= link_to "Edit", ruby_sage.edit_admin_knowledge_chunk_path(@chunk), class: "rs-admin-btn" %>
+      <%= button_to "Delete", ruby_sage.admin_knowledge_chunk_path(@chunk),
+                    method: :delete,
+                    class: "rs-admin-btn rs-admin-btn-danger",
+                    data: { confirm: "Delete this entry?" },
+                    form: { style: "display: inline" } %>
+    <% end %>
+  </div>
+
+  <div class="rs-admin-card">
+    <h2 style="font-size: 20px; color: #111; text-transform: none; letter-spacing: 0;"><%= @chunk.title %></h2>
+    <div style="font-size: 12px; color: #888; margin-bottom: 16px;">
+      <code><%= @chunk.slug %></code> ·
+      <span class="rs-badge rs-badge-<%= @chunk.source == 'yaml' ? 'yaml' : 'admin' %>">
+        <%= @chunk.source == "yaml" ? "YAML" : "Admin" %>
+      </span>
+      ·
+      <span class="rs-badge rs-badge-<%= @chunk.published? ? 'pub' : 'draft' %>">
+        <%= @chunk.published? ? "Published" : "Draft" %>
+      </span>
+    </div>
+
+    <% if Array(@chunk.audiences).any? %>
+      <div style="margin-bottom: 12px;">
+        <% Array(@chunk.audiences).each do |a| %>
+          <span class="rs-badge rs-badge-audience"><%= a %></span>
+        <% end %>
+      </div>
+    <% end %>
+
+    <% if Array(@chunk.tags).any? %>
+      <div class="rs-tags" style="margin-bottom: 16px;">
+        <% Array(@chunk.tags).each do |tag| %><span class="rs-tag"><%= tag %></span><% end %>
+      </div>
+    <% end %>
+
+    <% if @chunk.url.present? %>
+      <p style="margin-bottom: 8px;"><strong>Link:</strong> <%= link_to @chunk.url, @chunk.url, target: "_blank", rel: "noopener" %></p>
+    <% end %>
+    <% if @chunk.video_url.present? %>
+      <p style="margin-bottom: 16px;"><strong>Video:</strong> <%= link_to @chunk.video_url, @chunk.video_url, target: "_blank", rel: "noopener" %></p>
+    <% end %>
+
+    <hr style="border: 0; border-top: 1px solid #eee; margin: 16px 0;">
+
+    <div class="rs-body-preview"><%= RubySage::MarkdownRenderer.render(@chunk.body).html_safe %></div>
+  </div>
+</div>
+</body>
+</html>

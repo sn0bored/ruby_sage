@@ -98,6 +98,15 @@ RubySage.configure do |config|
   # Keep the N most recent scans in the database; older ones are pruned.
   # config.scan_retention = 7
 
+  # === Knowledge base ===
+  # RubySage retrieves curated knowledge entries alongside code artifacts.
+  # Author them as YAML at config/ruby_sage/knowledge/*.yml and sync with
+  # `rake ruby_sage:knowledge:sync`, or create them via the admin UI at
+  # /ruby_sage/admin/knowledge. Readable index at /ruby_sage/help.
+  #
+  # config.knowledge_path  = Rails.root.join("config", "ruby_sage", "knowledge")
+  # config.knowledge_boost = 3.0  # multiplier vs. auto-summarized code artifacts
+
   # === Network timeouts ===
   # config.request_timeout = 30
   # config.max_retries     = 2
