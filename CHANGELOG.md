@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.4] - 2026-05-18
+
+### Fixed
+
+- **Kramdown GFM parser fallback.** v0.3.3 hardcoded `input: "GFM"` which requires the separate `kramdown-parser-gfm` gem. Hosts without that gem (e.g., everyone who only added `kramdown` to their Gemfile) got `Kramdown::Error: kramdown has no parser to handle the specified input format: GFM` on every chat request. Now `require "kramdown/parser/gfm"` is wrapped in a `begin/rescue LoadError` block and the renderer falls back to default kramdown dialect when GFM is unavailable.
+
 ## [0.3.3] - 2026-05-18
 
 ### Changed

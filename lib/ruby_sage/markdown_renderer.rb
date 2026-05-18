@@ -19,7 +19,17 @@ module RubySage
 
     def kramdown(markdown)
       require "kramdown"
-      ::Kramdown::Document.new(markdown, input: "GFM", auto_ids: false, hard_wrap: false).to_html
+      options = { auto_ids: false, hard_wrap: false }
+      # GFM input adds fenced code blocks, task lists, and autolinks. It ships
+      # as a separate gem (kramdown-parser-gfm); use it when available, fall
+      # back to default kramdown dialect otherwise.
+      begin
+        require "kramdown/parser/gfm"
+        options[:input] = "GFM"
+      rescue LoadError
+        # Default markdown dialect — still handles headers, lists, bold, links.
+      end
+      ::Kramdown::Document.new(markdown, options).to_html
     rescue LoadError
       nil
     end
