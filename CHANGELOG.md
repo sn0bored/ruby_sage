@@ -1,6 +1,12 @@
 # Changelog
 
-## [Unreleased]
+## [0.3.1] - 2026-05-18
+
+### Changed
+
+- Internal cleanup: factored the syncer's `run` into smaller methods, split `citation_for` into kind-specific helpers, extracted the slug-format error message into a constant, and renamed an internal predicate to satisfy `Naming/PredicateMethod`. No behavior changes; rubocop now reports 0 offenses across the gem.
+
+## [0.3.0] - 2026-05-18
 
 ### Added
 

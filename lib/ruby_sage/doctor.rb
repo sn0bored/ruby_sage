@@ -161,9 +161,8 @@ module RubySage
     end
 
     def check_knowledge_base_present
-      return ok_finding("knowledge", "Knowledge layer not relevant in :#{config.mode} mode") unless %i[admin
-                                                                                                       user].include?(config.mode)
-      return ok_finding("knowledge", "ruby_sage_knowledge_chunks table not present yet") unless knowledge_table_exists?
+      return ok_finding("knowledge", "Not relevant in :#{config.mode} mode") unless knowledge_relevant?
+      return ok_finding("knowledge", "Knowledge table not present yet") unless knowledge_table_exists?
 
       count = KnowledgeChunk.published.count
       return ok_finding("knowledge", "#{count} published knowledge entries") if count.positive?
@@ -174,6 +173,10 @@ module RubySage
         "Add YAML files under #{Knowledge.path} and run `rake ruby_sage:knowledge:sync`, " \
         "or create entries via /ruby_sage/admin/knowledge."
       )
+    end
+
+    def knowledge_relevant?
+      %i[admin user].include?(config.mode)
     end
 
     def knowledge_table_exists?

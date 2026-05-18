@@ -2,7 +2,7 @@
 
 require "rails_helper"
 
-RSpec.describe RubySage::Retriever, "knowledge integration" do
+RSpec.describe RubySage::Retriever, "#call with knowledge chunks" do
   before do
     RubySage::KnowledgeChunk.delete_all
     RubySage::Artifact.delete_all

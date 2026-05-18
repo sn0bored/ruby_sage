@@ -2,7 +2,7 @@
 
 module RubySage
   module Knowledge
-    # Idempotently upserts an array of YAML-loaded entries into the
+    # Idempotently sync_entrys an array of YAML-loaded entries into the
     # +ruby_sage_knowledge_chunks+ table, mapping each entry to a
     # +KnowledgeChunk+ with +source: "yaml"+.
     #
@@ -26,44 +26,34 @@ module RubySage
 
       # @return [Result]
       def run
-        created = 0
-        updated = 0
-        unchanged = 0
-
-        seen_slugs = []
-
-        @entries.each do |entry|
-          slug = entry.fetch("slug")
-          seen_slugs << slug
-
-          existing = KnowledgeChunk.find_by(slug: slug)
-          if existing
-            if existing.source == "admin_ui"
-              # Don't clobber an admin-authored chunk that happens to share a slug.
-              # The admin row wins; the YAML entry is ignored with a warning.
-              warn_admin_slug_collision(slug, entry["source_file"])
-              next
-            end
-
-            if apply_changes(existing, entry)
-              updated += 1
-            else
-              unchanged += 1
-            end
-          else
-            create_from_entry(entry)
-            created += 1
-          end
-        end
-
+        tally = { created: 0, updated: 0, unchanged: 0 }
+        seen_slugs = @entries.map { |entry| sync_entry(entry, tally) }.compact
         removed = remove_stale_yaml_chunks(seen_slugs)
-
-        Result.new(created: created, updated: updated, unchanged: unchanged, removed: removed)
+        Result.new(**tally, removed: removed)
       end
 
       private
 
-      def apply_changes(chunk, entry)
+      def sync_entry(entry, tally)
+        slug = entry.fetch("slug")
+        existing = KnowledgeChunk.find_by(slug: slug)
+
+        if existing.nil?
+          create_from_entry(entry)
+          tally[:created] += 1
+          return slug
+        end
+
+        if existing.source == "admin_ui"
+          warn_admin_slug_collision(slug, entry["source_file"])
+          return nil
+        end
+
+        tally[changed_after_apply?(existing, entry) ? :updated : :unchanged] += 1
+        slug
+      end
+
+      def changed_after_apply?(chunk, entry)
         new_attrs = attributes_from(entry)
         return false if new_attrs.all? { |k, v| chunk.public_send(k) == v }
 
@@ -76,12 +66,12 @@ module RubySage
       end
 
       def attributes_from(entry)
-        ATTRS.each_with_object({}) do |attr, memo|
+        attrs = ATTRS.each_with_object({}) do |attr, memo|
           memo[attr] = entry[attr] if entry.key?(attr)
-        end.tap do |attrs|
-          attrs["tags"] = Array(attrs["tags"]).map(&:to_s) if attrs.key?("tags")
-          attrs["audiences"] = Array(attrs["audiences"]).map(&:to_s) if attrs.key?("audiences")
         end
+        attrs["tags"] = Array(attrs["tags"]).map(&:to_s) if attrs.key?("tags")
+        attrs["audiences"] = Array(attrs["audiences"]).map(&:to_s) if attrs.key?("audiences")
+        attrs
       end
 
       def remove_stale_yaml_chunks(seen_slugs)
