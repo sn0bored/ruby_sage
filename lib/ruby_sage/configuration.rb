@@ -120,6 +120,16 @@ module RubySage
     #   @return [Proc, nil] callable receiving a markdown string and returning
     #     HTML. Defaults to a kramdown-based renderer when +kramdown+ is
     #     loadable, falling back to +ActionView::Helpers::TextHelper#simple_format+.
+    # @!attribute [rw] widget_title
+    #   @return [String] header shown at the top of the chat drawer. Override
+    #     so the widget reads like a host-branded assistant ("Support Bot",
+    #     "IT Help", etc.) instead of "RubySage". Default +"RubySage"+.
+    # @!attribute [rw] widget_button_label
+    #   @return [String] text on the floating launcher button. Default
+    #     +"How does this work?"+.
+    # @!attribute [rw] widget_input_placeholder
+    #   @return [String] placeholder text in the chat input. Default
+    #     +"Ask about this page or your whole codebase..."+.
     attr_accessor :provider, :api_key, :model, :summarization_model,
                   :auth_check, :scope, :mode, :scan_retention,
                   :scanner_include, :scanner_exclude,
@@ -128,7 +138,8 @@ module RubySage
                   :enable_database_queries, :query_scope, :query_connection,
                   :max_query_rows, :query_timeout_ms, :tool_loop_max_iterations,
                   :persist_chat_turns, :identify_asker, :model_pricing,
-                  :knowledge_path, :knowledge_boost, :markdown_renderer
+                  :knowledge_path, :knowledge_boost, :markdown_renderer,
+                  :widget_title, :widget_button_label, :widget_input_placeholder
 
     # Builds a configuration object with conservative defaults.
     #
@@ -139,6 +150,7 @@ module RubySage
       assign_audience_defaults
       assign_database_query_defaults
       assign_knowledge_defaults
+      assign_widget_defaults
     end
 
     private
@@ -180,6 +192,12 @@ module RubySage
       @knowledge_path = nil # lazily resolved to Rails.root/config/ruby_sage/knowledge
       @knowledge_boost = 3.0
       @markdown_renderer = nil
+    end
+
+    def assign_widget_defaults
+      @widget_title = "RubySage"
+      @widget_button_label = "How does this work?"
+      @widget_input_placeholder = "Ask about this page or your whole codebase..."
     end
 
     def default_scanner_include
