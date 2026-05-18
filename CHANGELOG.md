@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.3] - 2026-05-18
+
+### Changed
+
+- **Widget renders the chat answer as HTML.** The chat response now includes `answer_html` (rendered via `RubySage::MarkdownRenderer`) alongside the existing `answer` plain-text field. The widget JS uses `answer_html` when present so markdown features (lists, bold, code blocks, links) display correctly instead of showing literal `**bold**` etc. Backwards-compatible — the JS falls back to `answer` plain text when `answer_html` is absent.
+- **Citation snippets stripped to plain text.** The retriever's `knowledge_snippet` now removes HTML tags, kramdown attribute blocks (`{::}`, `{:.class}`), markdown link/image syntax, and surrounding formatting characters before truncating. Fixes the "sources" section of the widget showing raw `<div markdown="1">` noise when knowledge entries came from HTML-flavored sources like Action Text.
+
 ## [0.3.2] - 2026-05-18
 
 ### Added

@@ -191,11 +191,25 @@ module RubySage
     end
 
     def knowledge_snippet(chunk)
-      body = chunk.body.to_s.strip
+      body = plain_text(chunk.body)
       return chunk.title if body.empty?
 
       first_sentence = body.split(/\n\n|(?<=[.!?])\s+/).first.to_s
       first_sentence.length > 200 ? "#{first_sentence[0, 197]}..." : first_sentence
+    end
+
+    # Strips HTML tags, kramdown attribute blocks, and markdown formatting so
+    # citation snippets display as clean human-readable text.
+    def plain_text(markdown)
+      text = markdown.to_s
+      text = text.gsub(/<[^>]+>/, " ")                       # HTML tags
+      text = text.gsub(/\{:[^}]*\}/, "")                     # kramdown IAL like {::} or {:.cls}
+      text = text.gsub(/!\[([^\]]*)\]\([^)]*\)/, '\1')       # ![alt](url) -> alt
+      text = text.gsub(/\[([^\]]+)\]\([^)]*\)/, '\1')        # [text](url) -> text
+      text = text.gsub(/[`*_~]+/, "")                        # ` * _ ~
+      text = text.gsub(/^#+\s*/m, "")                        # leading # headers
+      text = text.gsub(/&amp;/, "&").gsub(/&lt;/, "<").gsub(/&gt;/, ">").gsub(/&quot;/, '"')
+      text.squeeze(" ").strip
     end
   end
 end
