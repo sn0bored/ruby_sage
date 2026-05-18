@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RubySage — New knowledge entry</title>
+  <%= render "styles" %>
+</head>
+<body>
+<header class="rs-admin-header">
+  <h1>RubySage</h1>
+  <span class="rs-admin-badge">New knowledge entry</span>
+</header>
+<div class="rs-admin-body">
+  <div class="rs-admin-card">
+    <%= render "form",
+                chunk: @chunk,
+                form_url: ruby_sage.admin_knowledge_chunks_path,
+                form_method: :post,
+                submit_label: "Create entry" %>
+  </div>
+</div>
+</body>
+</html>

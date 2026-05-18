@@ -106,6 +106,20 @@ module RubySage
     #   @return [Hash{String => Hash}] per-model USD pricing overrides merged
     #     into +RubySage::CostCalculator::DEFAULT_PRICING+. Use this to add a
     #     custom model or update prices without waiting for a gem release.
+    # @!attribute [rw] knowledge_path
+    #   @return [Pathname, String] directory where the host stores curated
+    #     knowledge YAML files. +rake ruby_sage:knowledge:sync+ reads
+    #     +*.yml+ from this path and upserts +RubySage::KnowledgeChunk+ rows
+    #     with +source: "yaml"+. Defaults to
+    #     +Rails.root/config/ruby_sage/knowledge+.
+    # @!attribute [rw] knowledge_boost
+    #   @return [Float] multiplier applied to knowledge-chunk relevance scores
+    #     in the retriever. Knowledge is curated, so it should outrank
+    #     auto-summarized code artifacts in +:admin+ and +:user+ modes. Default 3.0.
+    # @!attribute [rw] markdown_renderer
+    #   @return [Proc, nil] callable receiving a markdown string and returning
+    #     HTML. Defaults to a kramdown-based renderer when +kramdown+ is
+    #     loadable, falling back to +ActionView::Helpers::TextHelper#simple_format+.
     attr_accessor :provider, :api_key, :model, :summarization_model,
                   :auth_check, :scope, :mode, :scan_retention,
                   :scanner_include, :scanner_exclude,
@@ -113,7 +127,8 @@ module RubySage
                   :audience_for, :user_facing_paths,
                   :enable_database_queries, :query_scope, :query_connection,
                   :max_query_rows, :query_timeout_ms, :tool_loop_max_iterations,
-                  :persist_chat_turns, :identify_asker, :model_pricing
+                  :persist_chat_turns, :identify_asker, :model_pricing,
+                  :knowledge_path, :knowledge_boost, :markdown_renderer
 
     # Builds a configuration object with conservative defaults.
     #
@@ -123,6 +138,7 @@ module RubySage
       assign_scanner_defaults
       assign_audience_defaults
       assign_database_query_defaults
+      assign_knowledge_defaults
     end
 
     private
@@ -158,6 +174,12 @@ module RubySage
       @persist_chat_turns = true
       @identify_asker = nil
       @model_pricing = {}
+    end
+
+    def assign_knowledge_defaults
+      @knowledge_path = nil # lazily resolved to Rails.root/config/ruby_sage/knowledge
+      @knowledge_boost = 3.0
+      @markdown_renderer = nil
     end
 
     def default_scanner_include

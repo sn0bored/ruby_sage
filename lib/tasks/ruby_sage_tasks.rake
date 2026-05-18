@@ -85,6 +85,50 @@ namespace :ruby_sage do
     RubySage::CliChat.new.run(query)
   end
 
+  namespace :knowledge do
+    desc "Sync YAML knowledge entries from config/ruby_sage/knowledge/*.yml into the database."
+    task sync: :environment do
+      path = RubySage::Knowledge.path
+      entries = RubySage::Knowledge::Loader.new(path: path).load
+      result = RubySage::Knowledge::Syncer.new(entries: entries).run
+
+      puts "Knowledge sync from #{path}"
+      puts "  files seen:   #{Dir.glob(path.join('*.{yml,yaml}').to_s).size}" if path.exist?
+      puts "  entries in:   #{result.total_in}"
+      puts "  created:      #{result.created}"
+      puts "  updated:      #{result.updated}"
+      puts "  unchanged:    #{result.unchanged}"
+      puts "  removed:      #{result.removed} (YAML-sourced rows no longer in the files)"
+    end
+
+    desc "Plan an agent-driven knowledge seed: write candidate list + instructions for a local coding agent."
+    task plan: :environment do
+      output_dir = ENV.fetch("OUTPUT_DIR", Rails.root.join("tmp/ruby_sage").to_s)
+      result = RubySage::Knowledge::AgentPlanner.new(
+        host_root: Rails.root, output_dir: output_dir
+      ).run
+
+      puts "Wrote candidates:   #{result[:candidates_path]} (#{result[:candidate_count]} candidates)"
+      puts "Wrote instructions: #{result[:instructions_path]}"
+      puts ""
+      puts "Next: have your coding agent read the instructions and write"
+      puts "  #{result[:knowledge_yml_path]}"
+      puts "Then run: bundle exec rake ruby_sage:knowledge:apply"
+    end
+
+    desc "Apply an agent-authored knowledge.yml into config/ruby_sage/knowledge/seeded.yml + run sync."
+    task apply: :environment do
+      output_dir = ENV.fetch("OUTPUT_DIR", Rails.root.join("tmp/ruby_sage").to_s)
+      result = RubySage::Knowledge::AgentApplier.new(
+        host_root: Rails.root, output_dir: output_dir
+      ).run
+
+      puts "Wrote #{result[:destination_path]} (#{result[:entry_count]} entries)."
+      puts "Running knowledge:sync to upsert..."
+      Rake::Task["ruby_sage:knowledge:sync"].invoke
+    end
+  end
+
   desc "Diagnose common RubySage install problems and report fixes."
   task doctor: :environment do
     findings = RubySage::Doctor.new.run

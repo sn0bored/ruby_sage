@@ -1,0 +1,68 @@
+<%= form_with model: chunk, url: form_url, method: form_method, local: true do |f| %>
+  <% if chunk.errors.any? %>
+    <div class="rs-errors">
+      <strong><%= pluralize(chunk.errors.count, "error") %> prevented save:</strong>
+      <ul>
+        <% chunk.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="rs-form-row">
+    <%= f.label :title %>
+    <%= f.text_field :title, required: true %>
+  </div>
+
+  <div class="rs-form-row">
+    <%= f.label :slug %>
+    <%= f.text_field :slug, placeholder: "auto-generated from title" %>
+    <div class="rs-hint">Lowercase letters, numbers, and dashes only. Used in URLs and citation links.</div>
+  </div>
+
+  <div class="rs-form-row">
+    <%= f.label :body %>
+    <%= f.text_area :body, required: true, rows: 14 %>
+    <div class="rs-hint">Markdown. Headers, lists, links, and code blocks all work.</div>
+  </div>
+
+  <div class="rs-form-row">
+    <%= f.label :tags_string, "Tags" %>
+    <%= f.text_field :tags_string, value: Array(chunk.tags).join(", "), placeholder: "reports, exports, monthly" %>
+    <div class="rs-hint">Comma-separated. Used for category browsing and retrieval boost.</div>
+  </div>
+
+  <div class="rs-form-row">
+    <label>Audiences</label>
+    <% RubySage::KnowledgeChunk::AUDIENCES.each do |audience| %>
+      <label class="rs-audience-check">
+        <%= check_box_tag "knowledge_chunk[audiences][]", audience,
+                          Array(chunk.audiences).map(&:to_s).include?(audience) %>
+        <%= audience %>
+      </label>
+    <% end %>
+    <%= hidden_field_tag "knowledge_chunk[audiences][]", "" %>
+    <div class="rs-hint">Who can see this entry. Leave empty to show in every mode.</div>
+  </div>
+
+  <div class="rs-form-row">
+    <%= f.label :url, "External link (optional)" %>
+    <%= f.url_field :url, placeholder: "https://example.com/docs" %>
+  </div>
+
+  <div class="rs-form-row">
+    <%= f.label :video_url, "Video link (optional)" %>
+    <%= f.url_field :video_url, placeholder: "https://www.youtube.com/watch?v=..." %>
+  </div>
+
+  <div class="rs-form-row">
+    <label>
+      <%= f.check_box :published %>
+      Published (visible in /help and to the chat retriever)
+    </label>
+  </div>
+
+  <div class="rs-admin-actions">
+    <%= f.submit submit_label, class: "rs-admin-btn" %>
+    <%= link_to "Cancel", ruby_sage.admin_knowledge_chunks_path, class: "rs-admin-btn rs-admin-btn-secondary" %>
+  </div>
+<% end %>

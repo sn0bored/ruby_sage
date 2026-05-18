@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Help</title>
+  <%= render "styles" %>
+</head>
+<body>
+
+<header class="rs-help-header">
+  <div class="rs-help-inner">
+    <h1>Help <small>browse · search · ask</small></h1>
+    <form class="rs-help-search" method="get" action="<%= ruby_sage.help_index_path %>">
+      <input type="search" name="q" value="<%= @query %>" placeholder="Search how-tos…" autofocus>
+      <% if @active_tag %><input type="hidden" name="tag" value="<%= @active_tag %>"><% end %>
+    </form>
+  </div>
+</header>
+
+<div class="rs-help-body">
+
+  <% if @tags.any? %>
+    <div class="rs-help-aside">
+      <%= link_to "All", ruby_sage.help_index_path(q: @query), class: ("rs-active" unless @active_tag) %>
+      <% @tags.each do |tag, count| %>
+        <%= link_to "#{tag} (#{count})",
+                    ruby_sage.help_index_path(tag: tag, q: @query),
+                    class: ("rs-active" if @active_tag == tag) %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if @chunks.empty? %>
+    <div class="rs-help-empty">
+      <% if @query.present? %>
+        No entries match "<%= @query %>".
+      <% else %>
+        No help entries yet.
+      <% end %>
+    </div>
+  <% else %>
+    <div class="rs-help-grid">
+      <% @chunks.each do |chunk| %>
+        <%= link_to ruby_sage.help_path(chunk), class: "rs-help-card" do %>
+          <h3><%= chunk.title %></h3>
+          <p>
+            <%
+              body_snippet = chunk.body.to_s.gsub(/[#*`>_~]/, '').squeeze(" ").strip
+              body_snippet = body_snippet.length > 140 ? "#{body_snippet[0, 137]}..." : body_snippet
+            %>
+            <%= body_snippet %>
+          </p>
+          <% if Array(chunk.tags).any? %>
+            <div class="rs-help-tags">
+              <% Array(chunk.tags).first(4).each do |tag| %><span class="rs-help-tag"><%= tag %></span><% end %>
+            </div>
+          <% end %>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+</body>
+</html>

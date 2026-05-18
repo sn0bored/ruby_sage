@@ -1,0 +1,46 @@
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: #f5f5f5; color: #111; }
+  .rs-admin-header { background: #1a1a1a; color: #fff; padding: 16px 24px; display: flex; align-items: center; gap: 12px; }
+  .rs-admin-header h1 { font-size: 18px; font-weight: 600; }
+  .rs-admin-header .rs-admin-badge { font-size: 11px; background: #444; padding: 2px 8px; border-radius: 12px; }
+  .rs-admin-body { max-width: 980px; margin: 32px auto; padding: 0 16px; }
+  .rs-admin-notice { background: #d1fae5; border: 1px solid #6ee7b7; border-radius: 6px; padding: 10px 16px; margin-bottom: 20px; font-size: 14px; color: #065f46; }
+  .rs-admin-alert  { background: #fee2e2; border: 1px solid #fca5a5; border-radius: 6px; padding: 10px 16px; margin-bottom: 20px; font-size: 14px; color: #991b1b; }
+  .rs-admin-card { background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+  .rs-admin-card h2 { font-size: 14px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 16px; }
+  .rs-admin-actions { margin-bottom: 20px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .rs-admin-btn { display: inline-block; padding: 8px 18px; background: #1a1a1a; color: #fff; border: 0; border-radius: 6px; font-size: 14px; cursor: pointer; text-decoration: none; }
+  .rs-admin-btn-secondary { background: #fff; color: #1a1a1a; border: 1px solid #ddd; }
+  .rs-admin-btn-danger { background: #b91c1c; }
+  .rs-admin-btn-sm { font-size: 12px; padding: 4px 10px; }
+  .rs-admin-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .rs-admin-table th { text-align: left; font-size: 12px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 8px; border-bottom: 1px solid #eee; }
+  .rs-admin-table td { padding: 10px 8px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+  .rs-admin-table tr:last-child td { border-bottom: 0; }
+  .rs-badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .rs-badge-yaml { background: #ddd6fe; color: #5b21b6; }
+  .rs-badge-admin { background: #cffafe; color: #155e75; }
+  .rs-badge-pub { background: #d1fae5; color: #065f46; }
+  .rs-badge-draft { background: #fef3c7; color: #92400e; }
+  .rs-badge-audience { background: #e5e7eb; color: #374151; margin-right: 4px; }
+  .rs-admin-empty { text-align: center; color: #888; padding: 32px; font-size: 14px; }
+  .rs-form-row { margin-bottom: 16px; }
+  .rs-form-row label { display: block; font-size: 13px; font-weight: 600; color: #444; margin-bottom: 6px; }
+  .rs-form-row .rs-hint { font-size: 12px; color: #888; margin-top: 4px; }
+  .rs-form-row input[type=text], .rs-form-row input[type=url], .rs-form-row input[type=number], .rs-form-row textarea {
+    width: 100%; padding: 8px 10px; font-size: 14px; border: 1px solid #ddd; border-radius: 6px; background: #fff; font-family: inherit;
+  }
+  .rs-form-row textarea { min-height: 240px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; line-height: 1.5; }
+  .rs-form-row .rs-audience-check { display: inline-flex; align-items: center; gap: 4px; margin-right: 12px; font-weight: normal; font-size: 13px; }
+  .rs-errors { background: #fee2e2; border: 1px solid #fca5a5; border-radius: 6px; padding: 10px 16px; margin-bottom: 16px; font-size: 13px; color: #991b1b; }
+  .rs-errors li { margin-left: 16px; }
+  .rs-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+  .rs-tag { background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 12px; font-size: 11px; }
+  .rs-body-preview { white-space: pre-wrap; font-size: 14px; line-height: 1.55; color: #222; }
+  .rs-body-preview pre { background: #f6f8fa; padding: 12px; border-radius: 6px; overflow-x: auto; font-family: ui-monospace, monospace; font-size: 13px; }
+  .rs-body-preview code { background: #f6f8fa; padding: 1px 4px; border-radius: 3px; font-family: ui-monospace, monospace; font-size: 13px; }
+  .rs-body-preview h1, .rs-body-preview h2, .rs-body-preview h3 { margin: 18px 0 8px; }
+  .rs-body-preview p, .rs-body-preview ul, .rs-body-preview ol { margin: 8px 0; }
+  .rs-body-preview ul, .rs-body-preview ol { padding-left: 24px; }
+</style>
