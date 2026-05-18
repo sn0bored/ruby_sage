@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.2] - 2026-05-18
+
+### Added
+
+- **Widget branding config.** The chat drawer's header, launcher button, and input placeholder are now configurable so the widget reads as the host app's own assistant instead of "RubySage". New config keys: `widget_title` (default `"RubySage"`), `widget_button_label` (default `"How does this work?"`), `widget_input_placeholder` (default `"Ask about this page or your whole codebase..."`). Threaded server → client via data attributes on `#ruby-sage-root`; the JS HTML-escapes them before injection.
+
 ## [0.3.1] - 2026-05-18
 
 ### Changed

@@ -107,6 +107,13 @@ RubySage.configure do |config|
   # config.knowledge_path  = Rails.root.join("config", "ruby_sage", "knowledge")
   # config.knowledge_boost = 3.0  # multiplier vs. auto-summarized code artifacts
 
+  # === Widget branding ===
+  # Override the user-visible strings so the widget reads like your app's own
+  # assistant ("Support Bot", "IT Help", "Acme Concierge") instead of RubySage.
+  # config.widget_title             = "RubySage"
+  # config.widget_button_label      = "How does this work?"
+  # config.widget_input_placeholder = "Ask about this page or your whole codebase..."
+
   # === Network timeouts ===
   # config.request_timeout = 30
   # config.max_retries     = 2

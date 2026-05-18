@@ -9,7 +9,12 @@
 
     var mountPath = root.dataset.mount || "/ruby_sage";
     var mode = root.dataset.mode || "developer";
-    renderWidget(root, mountPath, mode);
+    var labels = {
+      title: root.dataset.title || "RubySage",
+      buttonLabel: root.dataset.buttonLabel || "How does this work?",
+      inputPlaceholder: root.dataset.inputPlaceholder || "Ask about this page or your whole codebase..."
+    };
+    renderWidget(root, mountPath, mode, labels);
   }
 
   function unmount() {
@@ -17,15 +22,15 @@
     if (root) delete root.dataset.rubySageMounted;
   }
 
-  function renderWidget(root, mountPath, mode) {
+  function renderWidget(root, mountPath, mode, labels) {
     var button = document.createElement("button");
     button.type = "button";
     button.className = "ruby-sage-button";
-    button.setAttribute("aria-label", "Open codebase chat");
-    button.textContent = "How does this work?";
+    button.setAttribute("aria-label", "Open " + labels.title);
+    button.textContent = labels.buttonLabel;
     root.appendChild(button);
 
-    var drawer = createDrawer(mountPath, mode);
+    var drawer = createDrawer(mountPath, mode, labels);
     document.body.appendChild(drawer);
 
     button.addEventListener("click", function() {
@@ -56,7 +61,13 @@
     ]
   };
 
-  function createDrawer(mountPath, mode) {
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, function(ch) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[ch];
+    });
+  }
+
+  function createDrawer(mountPath, mode, labels) {
     var history = [];  // conversation history for this drawer instance
     var starterQuestions = (STARTER_QUESTIONS[mode] || STARTER_QUESTIONS.developer);
 
@@ -64,7 +75,7 @@
     drawer.className = "ruby-sage-drawer";
     drawer.innerHTML =
       '<header class="ruby-sage-header">' +
-        '<span class="ruby-sage-title">RubySage</span>' +
+        '<span class="ruby-sage-title">' + escapeHtml(labels.title) + '</span>' +
         '<button type="button" class="ruby-sage-clear" aria-label="Clear conversation" title="Clear conversation">&#8635;</button>' +
         '<button type="button" class="ruby-sage-close" aria-label="Close">&#x2715;</button>' +
       "</header>" +
@@ -72,7 +83,7 @@
         '<div class="ruby-sage-starters" aria-label="Suggested questions"></div>' +
       "</div>" +
       '<form class="ruby-sage-form">' +
-        '<input class="ruby-sage-input" type="text" placeholder="Ask about this page or your whole codebase..." autocomplete="off" />' +
+        '<input class="ruby-sage-input" type="text" placeholder="' + escapeHtml(labels.inputPlaceholder) + '" autocomplete="off" />' +
         '<button type="submit" class="ruby-sage-submit">Send</button>' +
       "</form>";
 
