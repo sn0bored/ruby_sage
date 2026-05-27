@@ -21,6 +21,7 @@ module RubySage
           "kind" => attributes[:kind],
           "digest" => attributes[:digest],
           "summary" => attributes[:summary],
+          "signature" => json_value(attributes[:signature]),
           "public_symbols" => Array(attributes[:public_symbols]).map(&:to_s),
           "route_mappings" => attributes[:route_mappings],
           "audiences" => Array(attributes[:audiences]).map(&:to_s)
@@ -55,6 +56,20 @@ module RubySage
         return time if time.is_a?(String)
 
         time.iso8601
+      end
+
+      def json_value(value)
+        return value.map { |entry| json_value(entry) } if value.is_a?(Array)
+
+        return json_hash(value) if value.is_a?(Hash)
+
+        value
+      end
+
+      def json_hash(value)
+        value.each_with_object({}) do |(key, entry), result|
+          result[key.to_s] = json_value(entry)
+        end
       end
     end
   end

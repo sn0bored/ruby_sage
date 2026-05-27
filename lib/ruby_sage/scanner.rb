@@ -3,6 +3,7 @@
 require "fileutils"
 require "pathname"
 require "ruby_sage/artifacts/disk_store"
+require "ruby_sage/extractors/routes_loader"
 require "ruby_sage/indexer"
 require "ruby_sage/secret_redactor"
 require "ruby_sage/scanner/artifact_builder"
@@ -47,6 +48,7 @@ module RubySage
       summarize_artifacts(artifact_inputs, previous_artifacts)
       disk_store.prune_artifacts_outside(artifact_paths(artifact_inputs))
       write_manifest(started_at: started_at, file_count: artifact_inputs.size)
+      Extractors::RoutesLoader.new(host_root: host_root).run
       scan = Indexer.new(host_root: host_root, disk_store: disk_store).run
       prune_old_scans
       scan
@@ -98,10 +100,7 @@ module RubySage
           started_at: started_at,
           finished_at: Time.current,
           file_count: file_count,
-          scanner: {
-            "include" => Array(config.scanner_include),
-            "exclude" => Array(config.scanner_exclude)
-          }
+          scanner: { "include" => Array(config.scanner_include), "exclude" => Array(config.scanner_exclude) }
         }
       )
     end

@@ -58,6 +58,7 @@ module RubySage
           kind: payload[:kind],
           digest: payload[:digest],
           summary: payload[:summary],
+          signature: payload[:signature],
           public_symbols: Array(payload[:public_symbols]),
           route_mappings: payload[:route_mappings],
           audiences: Array(payload[:audiences])
