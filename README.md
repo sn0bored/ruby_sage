@@ -31,13 +31,20 @@ Then:
 
 ```bash
 bundle install
-rails generate ruby_sage:install
+rails generate ruby_sage:install --with-claude-config
 rails db:migrate
 ```
 
 Edit `config/initializers/ruby_sage.rb` to set your provider and API key.
 
-## Quickstart
+## Quick start
+
+```bash
+rails generate ruby_sage:install --with-claude-config
+rails db:migrate
+bundle exec rake ruby_sage:scan
+bin/rails s
+```
 
 ```ruby
 # config/initializers/ruby_sage.rb
