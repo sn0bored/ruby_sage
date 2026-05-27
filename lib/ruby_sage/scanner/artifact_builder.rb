@@ -3,10 +3,11 @@
 require "digest"
 require "pathname"
 require "ruby_sage/audience_classifier"
+require "ruby_sage/secret_redactor"
 
 module RubySage
   class Scanner
-    # Builds persisted artifacts from sanitized file contents.
+    # Builds artifact payloads from sanitized file contents.
     class ArtifactBuilder
       PATH_KIND_PREFIXES = {
         "app/models/" => "model",
@@ -42,21 +43,21 @@ module RubySage
         @audience_classifier = audience_classifier
       end
 
-      # Creates one Artifact and returns it with its sanitized contents.
+      # Builds one disk-ready artifact payload and its sanitized contents.
       #
-      # @param scan [RubySage::Scan]
       # @param path [Pathname]
-      # @return [Hash] artifact and redacted contents for the summary pass.
-      def build(scan:, path:)
+      # @return [Hash] +:path+, +:attributes+, and redacted +:contents+.
+      def build(path:)
         attrs = attributes_for(path: path)
-        artifact = Artifact.create!(attrs[:artifact_attributes].merge(scan: scan))
 
-        { artifact: artifact, contents: attrs[:contents] }
+        {
+          path: attrs[:artifact_attributes][:path],
+          attributes: attrs[:artifact_attributes],
+          contents: attrs[:contents]
+        }
       end
 
       # Computes the artifact attributes for a path without persisting.
-      # Used by AgentScan::Planner to assemble a manifest before the agent
-      # produces summaries.
       #
       # @param path [Pathname]
       # @return [Hash] +:artifact_attributes+ (without +:scan+) and +:contents+.

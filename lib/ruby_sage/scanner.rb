@@ -3,14 +3,14 @@
 require "fileutils"
 require "pathname"
 require "ruby_sage/artifacts/disk_store"
+require "ruby_sage/indexer"
 require "ruby_sage/secret_redactor"
 require "ruby_sage/scanner/artifact_builder"
-require "ruby_sage/scanner/disk_mirror"
 require "ruby_sage/scanner/walker"
 require "ruby_sage/summarizer"
 
 module RubySage
-  # Walks the host app filesystem and produces a Scan with associated Artifacts.
+  # Walks the host app filesystem, writes disk artifacts, and indexes them.
   #
   # @example
   #   scan = RubySage::Scanner.new(host_root: Rails.root).run
@@ -27,78 +27,82 @@ module RubySage
       @disk_store = disk_store || Artifacts::DiskStore.new(host_root: @host_root)
     end
 
-    # Runs a locked filesystem scan and persists scan artifacts.
+    # Runs a locked filesystem scan and returns the indexed scan.
     #
     # @return [RubySage::Scan]
     def run
-      with_lock { create_scan }
+      with_lock { scan_to_disk_and_index }
     end
 
     private
 
     attr_reader :host_root, :config, :disk_store
 
-    def create_scan
-      scan = nil
+    def scan_to_disk_and_index
       previous_artifacts = latest_completed_artifacts_by_path
-      scan = start_scan
-      finish_scan(scan, previous_artifacts)
-    rescue StandardError => e
-      scan&.update!(status: "failed", errors_log: e.full_message)
-      raise
-    end
-
-    def finish_scan(scan, previous_artifacts)
+      started_at = Time.current
       disk_store.ensure_layout
-      artifact_inputs = create_artifacts(scan)
+      artifact_inputs = build_artifact_inputs
+      write_artifacts(artifact_inputs)
       summarize_artifacts(artifact_inputs, previous_artifacts)
-      mirror_to_disk(scan)
-      complete_scan(scan)
+      disk_store.prune_artifacts_outside(artifact_paths(artifact_inputs))
+      write_manifest(started_at: started_at, file_count: artifact_inputs.size)
+      scan = Indexer.new(host_root: host_root, disk_store: disk_store).run
       prune_old_scans
       scan
     end
 
-    def mirror_to_disk(scan)
-      DiskMirror.new(scan: scan, disk_store: disk_store, scanner_config: config).run
-    end
-
-    def start_scan
-      Scan.create!(
-        status: "running",
-        started_at: Time.current,
-        git_sha: detect_git_sha,
-        ruby_version: RUBY_VERSION,
-        rails_version: Rails::VERSION::STRING
-      )
-    end
-
-    def create_artifacts(scan)
+    def build_artifact_inputs
       artifact_builder = ArtifactBuilder.new(host_root: host_root)
       Walker.new(host_root: host_root, config: config).paths.map do |path|
-        artifact_builder.build(scan: scan, path: path)
+        artifact_builder.build(path: path)
+      end
+    end
+
+    def write_artifacts(artifact_inputs)
+      artifact_inputs.each do |input|
+        disk_store.write_artifact(path: input[:path], attributes: input[:attributes])
+      end
+    end
+
+    def artifact_paths(artifact_inputs)
+      artifact_inputs.each_with_object([]) do |input, paths|
+        paths << input[:path]
       end
     end
 
     def summarize_artifacts(artifact_inputs, previous_artifacts)
       summarizer = Summarizer.new(config: config)
       artifact_inputs.each do |input|
-        summary = summary_for(input[:artifact], input[:contents], previous_artifacts, summarizer)
-        input[:artifact].update!(summary: summary) unless summary.nil?
+        summary = summary_for(input, previous_artifacts, summarizer)
+        next if summary.nil?
+
+        input[:attributes][:summary] = summary
+        disk_store.write_artifact(path: input[:path], attributes: input[:attributes])
       end
     end
 
-    def summary_for(artifact, contents, previous_artifacts, summarizer)
-      previous = previous_artifacts[artifact.path]
-      return previous.summary if previous&.digest == artifact.digest
+    def summary_for(input, previous_artifacts, summarizer)
+      previous = previous_artifacts[input[:path]]
+      return previous.summary if previous&.digest == input[:attributes][:digest]
 
-      summarizer.summarize(contents: contents, path: artifact.path)
+      summarizer.summarize(contents: input[:contents], path: input[:path])
     end
 
-    def complete_scan(scan)
-      scan.update!(
-        status: "completed",
-        finished_at: Time.current,
-        file_count: scan.artifacts.count
+    def write_manifest(started_at:, file_count:)
+      disk_store.write_manifest(
+        attributes: {
+          git_sha: detect_git_sha,
+          ruby_version: RUBY_VERSION,
+          rails_version: Rails::VERSION::STRING,
+          started_at: started_at,
+          finished_at: Time.current,
+          file_count: file_count,
+          scanner: {
+            "include" => Array(config.scanner_include),
+            "exclude" => Array(config.scanner_exclude)
+          }
+        }
       )
     end
 
