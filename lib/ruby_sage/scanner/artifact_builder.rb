@@ -3,6 +3,7 @@
 require "digest"
 require "pathname"
 require "ruby_sage/audience_classifier"
+require "ruby_sage/extractors/prism_extractor"
 require "ruby_sage/secret_redactor"
 
 module RubySage
@@ -24,14 +25,6 @@ module RubySage
         "app/workers/" => "worker",
         "app/views/" => "view"
       }.freeze
-
-      SYMBOL_PATTERN = /
-        \A\s*
-        (?:
-          (?:class|module)\s+(?<constant>[A-Z]\w*(?:::[A-Z]\w*)*) |
-          def\s+(?:self\.)?(?<method>[a-zA-Z_]\w*[!?=]?)
-        )
-      /x.freeze
 
       # Initializes a builder for paths under one host root.
       #
@@ -79,12 +72,14 @@ module RubySage
       end
 
       def artifact_attributes(path, contents)
+        signature = extract_signature(path, contents)
         attrs = {
           path: relative_path(path),
           kind: classify(path),
           digest: Digest::SHA256.hexdigest(contents),
           summary: nil,
-          public_symbols: extract_symbols(contents),
+          signature: signature,
+          public_symbols: public_symbols_from(signature),
           route_mappings: nil
         }
         attrs[:audiences] = audience_classifier.call(attributes: attrs)
@@ -113,11 +108,18 @@ module RubySage
         "other"
       end
 
-      def extract_symbols(contents)
-        contents.each_line.filter_map do |line|
-          match = line.match(SYMBOL_PATTERN)
-          match&.[](:constant) || match&.[](:method)
-        end.uniq
+      def extract_signature(path, contents)
+        return nil unless relative_path(path).end_with?(".rb")
+
+        Extractors::PrismExtractor.new(path: path, contents: contents).call
+      end
+
+      def public_symbols_from(signature)
+        return [] if signature.nil?
+
+        class_names = Array(signature[:classes]).filter_map { |entry| entry[:name] }
+        method_names = Array(signature[:methods]).filter_map { |entry| entry[:name] }
+        (class_names + method_names).uniq
       end
     end
   end

@@ -20,6 +20,7 @@ module RubySage
     private_class_method :serialize_json
 
     serialize_json :public_symbols
+    serialize_json :signature
     serialize_json :route_mappings
     serialize_json :audiences
 

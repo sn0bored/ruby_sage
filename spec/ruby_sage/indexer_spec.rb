@@ -35,6 +35,10 @@ RSpec.describe RubySage::Indexer do
           kind: "model",
           digest: "u-digest",
           summary: "User aggregate",
+          signature: {
+            classes: [{ name: "User", superclass: "ApplicationRecord" }],
+            methods: [{ name: "active?", receiver: "instance" }]
+          },
           public_symbols: %w[User active?],
           audiences: %w[developer]
         }
@@ -79,6 +83,10 @@ RSpec.describe RubySage::Indexer do
         kind: "model",
         digest: "u-digest",
         summary: "User aggregate",
+        signature: {
+          "classes" => [{ "name" => "User", "superclass" => "ApplicationRecord" }],
+          "methods" => [{ "name" => "active?", "receiver" => "instance" }]
+        },
         public_symbols: %w[User active?],
         audiences: %w[developer]
       )

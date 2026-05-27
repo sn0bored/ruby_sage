@@ -122,5 +122,19 @@ RSpec.describe RubySage::Scanner do
       payload = YAML.safe_load(disk_root.join("artifacts/app/models/post.rb.yml").read)
       expect(payload["summary"]).to eq("Post model summary")
     end
+
+    it "writes extracted signatures into model artifact yml" do
+      described_class.new(host_root: host_root, config: config).run
+
+      payload = YAML.safe_load(disk_root.join("artifacts/app/models/post.rb.yml").read)
+
+      expect(payload["signature"]["classes"]).to include(
+        hash_including("name" => "Post")
+      )
+      expect(payload["signature"]["methods"]).to include(
+        hash_including("name" => "published?"),
+        hash_including("name" => "recent")
+      )
+    end
   end
 end

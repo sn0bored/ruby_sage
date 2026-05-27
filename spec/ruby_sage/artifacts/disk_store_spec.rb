@@ -33,9 +33,16 @@ RSpec.describe RubySage::Artifacts::DiskStore do
         kind: "model",
         digest: "abc123",
         summary: "User aggregate root.",
+        signature: { classes: [{ name: "User" }], methods: [{ name: "active?" }] },
         public_symbols: %w[User active? recent],
         route_mappings: nil,
         audiences: %i[developer admin]
+      }
+    end
+    let(:serialized_signature) do
+      {
+        "classes" => [{ "name" => "User" }],
+        "methods" => [{ "name" => "active?" }]
       }
     end
 
@@ -55,6 +62,7 @@ RSpec.describe RubySage::Artifacts::DiskStore do
         kind: "model",
         digest: "abc123",
         summary: "User aggregate root.",
+        signature: serialized_signature,
         public_symbols: %w[User active? recent],
         route_mappings: nil,
         audiences: %w[developer admin]
