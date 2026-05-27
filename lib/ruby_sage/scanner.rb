@@ -2,8 +2,10 @@
 
 require "fileutils"
 require "pathname"
+require "ruby_sage/artifacts/disk_store"
 require "ruby_sage/secret_redactor"
 require "ruby_sage/scanner/artifact_builder"
+require "ruby_sage/scanner/disk_mirror"
 require "ruby_sage/scanner/walker"
 require "ruby_sage/summarizer"
 
@@ -19,9 +21,10 @@ module RubySage
     # @param host_root [String, Pathname] root directory of the host app.
     # @param config [RubySage::Configuration]
     # @return [RubySage::Scanner]
-    def initialize(host_root:, config: RubySage.configuration)
+    def initialize(host_root:, config: RubySage.configuration, disk_store: nil)
       @host_root = Pathname(host_root).expand_path
       @config = config
+      @disk_store = disk_store || Artifacts::DiskStore.new(host_root: @host_root)
     end
 
     # Runs a locked filesystem scan and persists scan artifacts.
@@ -33,7 +36,7 @@ module RubySage
 
     private
 
-    attr_reader :host_root, :config
+    attr_reader :host_root, :config, :disk_store
 
     def create_scan
       scan = nil
@@ -46,11 +49,17 @@ module RubySage
     end
 
     def finish_scan(scan, previous_artifacts)
+      disk_store.ensure_layout
       artifact_inputs = create_artifacts(scan)
       summarize_artifacts(artifact_inputs, previous_artifacts)
+      mirror_to_disk(scan)
       complete_scan(scan)
       prune_old_scans
       scan
+    end
+
+    def mirror_to_disk(scan)
+      DiskMirror.new(scan: scan, disk_store: disk_store, scanner_config: config).run
     end
 
     def start_scan

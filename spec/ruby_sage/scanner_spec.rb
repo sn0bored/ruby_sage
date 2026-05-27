@@ -59,4 +59,30 @@ RSpec.describe RubySage::Scanner do
 
     expect(second.artifacts.find_by!(path: "app/models/post.rb").summary).to eq("Cached")
   end
+
+  describe "disk mirror" do
+    let(:disk_root) { host_root.join(".ruby_sage") }
+
+    after { FileUtils.rm_rf(disk_root) }
+
+    it "writes a manifest and one artifact yml per file" do
+      described_class.new(host_root: host_root, config: config).run
+
+      expect(disk_root.join("manifest.json")).to be_file
+      expect(disk_root.join("artifacts/app/models/post.rb.yml")).to be_file
+      expect(disk_root.join("artifacts/config/routes.rb.yml")).to be_file
+    end
+
+    it "round-trips through the Indexer back to a Scan" do
+      described_class.new(host_root: host_root, config: config).run
+      RubySage::Artifact.delete_all
+      RubySage::Scan.delete_all
+
+      scan = RubySage::Indexer.new(host_root: host_root).run
+
+      expect(scan.artifacts.pluck(:path)).to include(
+        "app/models/post.rb", "config/routes.rb"
+      )
+    end
+  end
 end

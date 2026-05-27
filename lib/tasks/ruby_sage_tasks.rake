@@ -10,6 +10,13 @@ namespace :ruby_sage do
          "#{scan.artifacts.count} artifacts."
   end
 
+  desc "Rebuild the widget database from .ruby_sage/ on disk."
+  task index: :environment do
+    scan = RubySage::Indexer.new(host_root: Rails.root).run
+    puts "Indexed Scan ##{scan.id} - #{scan.artifacts.count} artifacts from " \
+         "#{Rails.root.join('.ruby_sage')}."
+  end
+
   namespace :scan do
     desc "Plan an agent-driven scan: write manifest.json + INSTRUCTIONS.md for a coding agent to summarize."
     task plan: :environment do
