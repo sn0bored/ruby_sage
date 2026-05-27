@@ -1,120 +1,37 @@
 # frozen_string_literal: true
 
-# RubySage configuration. See https://github.com/sn0bored/ruby_sage for full docs.
+# RubySage configuration.
+# See https://github.com/sn0bored/ruby_sage for full docs.
 
 RubySage.configure do |config|
-  # === Provider ===
-  # :anthropic uses prompt caching from day 1 (recommended).
-  # :openai works too; no caching in V1.
-  config.provider            = :anthropic
-  config.api_key             = ENV.fetch("ANTHROPIC_API_KEY", nil)
-  config.model               = "claude-sonnet-4-6"
-  config.summarization_model = "claude-haiku-4-5"
+  # RubySage defaults to Anthropic. Switch this if you configure another provider.
+  # config.provider = :anthropic
+  config.api_key = ENV.fetch("ANTHROPIC_API_KEY", nil)
 
-  # === Authorization ===
-  # The default :admin scope requires you to provide an auth_check lambda
-  # that returns true for users who are allowed to use RubySage.
-  # config.scope      = :admin
+  # The default :admin scope calls this lambda before serving the widget or API.
+  # Replace current_user/admin? with the host app's authorization rule.
   # config.auth_check = ->(controller) { controller.current_user&.admin? }
-  #
-  # Other scopes:
-  # config.scope = :signed_in              # any signed-in user
-  # config.scope = :public_rate_limited    # anyone (rate-limit at the host app level)
+  config.auth_check = ->(controller) { controller.current_user&.admin? }
 
-  # === CSP nonce (optional) ===
-  # If your host app uses Content-Security-Policy with nonces, supply the
-  # nonce so RubySage can attach it to the widget's <script> tag.
-  # config.csp_nonce = ->(controller) { controller.content_security_policy_nonce }
+  # Default scanner include paths:
+  # config.scanner_include = %w[
+  #   app/models app/controllers app/services app/jobs app/mailers app/policies
+  #   app/queries app/serializers app/decorators app/helpers app/components
+  #   app/workers app/views config/routes.rb db/schema.rb README.md CLAUDE.md
+  #   .cursorrules
+  # ]
 
-  # === Mode ===
-  # Shapes the system prompt AND filters which artifacts are visible to the
-  # widget. Three audiences:
-  #   :developer — code/architecture answers with file paths and class names
-  #   :admin     — feature and workflow answers (no internals leaked)
-  #   :user      — end-user how-to only; refuses to discuss internals
-  # config.mode = :developer
-
-  # === Audience scoping (controls which artifacts are visible per mode) ===
-  # By default a heuristic tags each scanned file: services/jobs/policies are
-  # developer-only, models/controllers/views are developer+admin, and the
-  # :user audience is empty until you opt in.
-  #
-  # The simplest way to expose end-user help docs to :user mode:
-  # config.user_facing_paths = ["app/views/help/**/*", "app/views/marketing/**/*"]
-  #
-  # For full control, supply a callable that returns an array of audience
-  # symbols for each artifact. nil means "use the default heuristic."
-  # config.audience_for = ->(attrs) {
-  #   case attrs[:path]
-  #   when /\Aapp\/views\/public\// then %i[developer admin user]
-  #   when /\Aapp\/services\/billing\// then %i[developer]   # tighter than default
-  #   end
-  # }
-
-  # === Model pricing (USD per million tokens) ===
-  # The gem ships pricing for current Anthropic + OpenAI models. Override
-  # or add a custom model here without waiting for a gem release.
-  # config.model_pricing = {
-  #   "my-fine-tune" => {
-  #     input_per_million: 2.5,
-  #     output_per_million: 10.0,
-  #     cache_read_per_million: 0.25,
-  #     cache_write_per_million: 3.0
-  #   }
-  # }
-
-  # === Chat turn audit + usage tracking ===
-  # When true (default), every chat-widget turn writes a RubySage::ChatTurn
-  # row with the question, answer, mode, tool calls (incl. SQL the model ran
-  # in :admin mode), citations, and token usage. Browse at
-  # /ruby_sage/admin/chat_turns.
-  # config.persist_chat_turns = true
-  #
-  # Optionally identify who asked. Should return an ActiveRecord object.
-  # config.identify_asker = ->(controller) { controller.current_user }
-
-  # === Database queries (admin "magic search") ===
-  # When :admin mode is on AND this is true, the chat loop can run read-only
-  # SELECTs against your DB to answer live-data questions
-  # ("who is the author of post 47?"). Three safety layers: SELECT-only
-  # validation, mandatory transaction rollback, PostgreSQL statement_timeout.
-  # The strongest safety is a read-only DB user — set config.query_connection
-  # if true tenant isolation matters.
-  # config.enable_database_queries = false
-  #
-  # Tenant scoping (prompt-level reminder appended to the admin system prompt).
-  # For hard isolation pair with a read-only connection and DB row security.
-  # config.query_scope = ->(controller) { "organization_id = #{controller.current_user.organization_id}" }
-  #
-  # Use a dedicated read-only ActiveRecord connection for queries.
-  # config.query_connection = ->(_controller) { ReadOnlyDatabase.connection }
-  #
-  # Hard caps on query results.
-  # config.max_query_rows         = 100
-  # config.query_timeout_ms       = 5_000
-  # config.tool_loop_max_iterations = 5
-
-  # === Scan retention ===
-  # Keep the N most recent scans in the database; older ones are pruned.
-  # config.scan_retention = 7
-
-  # === Knowledge base ===
-  # RubySage retrieves curated knowledge entries alongside code artifacts.
-  # Author them as YAML at config/ruby_sage/knowledge/*.yml and sync with
-  # `rake ruby_sage:knowledge:sync`, or create them via the admin UI at
-  # /ruby_sage/admin/knowledge. Readable index at /ruby_sage/help.
-  #
-  # config.knowledge_path  = Rails.root.join("config", "ruby_sage", "knowledge")
-  # config.knowledge_boost = 3.0  # multiplier vs. auto-summarized code artifacts
-
-  # === Widget branding ===
-  # Override the user-visible strings so the widget reads like your app's own
-  # assistant ("Support Bot", "IT Help", "Acme Concierge") instead of RubySage.
-  # config.widget_title             = "RubySage"
-  # config.widget_button_label      = "How does this work?"
-  # config.widget_input_placeholder = "Ask about this page or your whole codebase..."
-
-  # === Network timeouts ===
-  # config.request_timeout = 30
-  # config.max_retries     = 2
+  # Default scanner exclude paths and globs:
+  # config.scanner_exclude = [
+  #   "vendor/",
+  #   "node_modules/",
+  #   "tmp/",
+  #   "log/",
+  #   "db/seeds.rb",
+  #   "db/data/",
+  #   "config/credentials*",
+  #   "*.env*",
+  #   "*.key",
+  #   "*.pem"
+  # ]
 end
