@@ -1,0 +1,94 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+$LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
+
+require "pathname"
+
+module RubySageCLI
+  module_function
+
+  # Dispatches the ruby_sage executable subcommand.
+  #
+  # @param argv [Array<String>] command-line arguments.
+  # @return [void]
+  def run(argv)
+    command = argv.shift
+    host_root = extract_host_root(argv)
+
+    case command
+    when "scan" then run_scan(host_root)
+    when "index" then run_index(host_root)
+    when "mcp" then run_mcp(host_root)
+    else usage_and_exit
+    end
+  end
+
+  # Extracts the optional host root from CLI arguments.
+  #
+  # @param argv [Array<String>] mutable command-line arguments.
+  # @return [Pathname] absolute host root path.
+  def extract_host_root(argv)
+    index = argv.index("--host-root")
+    return Pathname(Dir.pwd).expand_path if index.nil?
+
+    value = argv[index + 1]
+    usage_and_exit if value.nil? || value.start_with?("--")
+
+    argv.slice!(index, 2)
+    Pathname(value).expand_path
+  end
+
+  # Boots the host app and runs a one-shot RubySage scan.
+  #
+  # @param host_root [Pathname] absolute host root path.
+  # @return [void]
+  def run_scan(host_root)
+    boot_host_environment(host_root)
+    require "ruby_sage"
+
+    scan = RubySage::Scanner.new(host_root: host_root).run
+    puts "Scan ##{scan.id} #{scan.status} - #{scan.file_count} files, #{scan.artifacts.count} artifacts."
+  end
+
+  # Boots the host app and rebuilds the widget database from disk artifacts.
+  #
+  # @param host_root [Pathname] absolute host root path.
+  # @return [void]
+  def run_index(host_root)
+    boot_host_environment(host_root)
+    require "ruby_sage"
+
+    scan = RubySage::Indexer.new(host_root: host_root).run
+    puts "Indexed Scan ##{scan.id} - #{scan.artifacts.count} artifacts from #{host_root.join('.ruby_sage')}."
+  end
+
+  # Starts the stdio MCP server without booting Rails.
+  #
+  # @param host_root [Pathname] absolute host root path.
+  # @return [void]
+  def run_mcp(host_root)
+    require "ruby_sage/mcp/server"
+
+    RubySage::MCP::Server.new(host_root: host_root).run
+  end
+
+  # Requires the host Rails environment when present.
+  #
+  # @param host_root [Pathname] absolute host root path.
+  # @return [void]
+  def boot_host_environment(host_root)
+    environment = host_root.join("config", "environment.rb")
+    require environment.to_s if environment.file?
+  end
+
+  # Prints command usage and exits with a non-zero status.
+  #
+  # @return [void]
+  def usage_and_exit
+    warn "Usage: ruby_sage [scan|index|mcp] [--host-root PATH]"
+    exit 1
+  end
+end
+
+RubySageCLI.run(ARGV)

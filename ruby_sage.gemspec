@@ -24,10 +24,12 @@ Gem::Specification.new do |spec|
 
   spec.files = Dir.chdir(__dir__) do
     Dir.glob(
-      ["{app,config,db,lib}/**/*", "MIT-LICENSE", "LICENSE", "README.md", "CHANGELOG.md", "Rakefile"],
+      ["{app,config,db,exe,lib}/**/*", "MIT-LICENSE", "LICENSE", "README.md", "CHANGELOG.md", "Rakefile"],
       File::FNM_DOTMATCH
     ).select { |file| File.file?(file) }
   end
+  spec.bindir = "exe"
+  spec.executables = ["ruby_sage"]
   spec.require_paths = ["lib"]
 
   spec.add_dependency "prism", ">= 1.0"
