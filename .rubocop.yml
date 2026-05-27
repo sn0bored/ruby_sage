@@ -71,6 +71,9 @@ Metrics/ClassLength:
     - "lib/ruby_sage/agent_scan/instructions.rb"
     - "app/controllers/ruby_sage/chat_controller.rb"
     - "lib/ruby_sage/doctor.rb"
+    - "lib/ruby_sage/mcp/server.rb"
+    - "lib/ruby_sage/mcp/tools/find_relevant_files.rb"
+    - "lib/ruby_sage/mcp/tools/get_file_context.rb"
 
 Metrics/BlockLength:
   Exclude:

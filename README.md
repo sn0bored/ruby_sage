@@ -191,6 +191,23 @@ curl -X POST https://your-app.com/ruby_sage/internal/retrieve \
 
 A typical Cursor / Claude Code session can spend 50–200K input tokens orienting the model to a Rails codebase before any real work happens. Swap that for a 3K-token retrieval call and your dev token bill drops by an order of magnitude.
 
+### Claude Code MCP
+
+Run a scan so `.ruby_sage/` exists, then point Claude Code at the RubySage stdio server:
+
+```json
+{
+  "mcpServers": {
+    "ruby_sage": {
+      "command": "/abs/path/to/host_app/bin/ruby_sage",
+      "args": ["mcp", "--host-root", "/abs/path/to/host_app"]
+    }
+  }
+}
+```
+
+If RubySage is only available through the host app bundle, use `bundle exec ruby_sage mcp --host-root /abs/path/to/host_app` for the command/args pair instead.
+
 ### Generate onboarding docs
 
 ```bash
