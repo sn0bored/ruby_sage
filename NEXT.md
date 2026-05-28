@@ -126,11 +126,61 @@ These were in earlier drafts and are deferred until V1 proves the artifact-layer
 
 This file is the resume point. Don't need to re-explain the architecture or the pivot — it's all here.
 
-When picking up:
-- Start Phase A unless you've already done it.
-- Move to Phase B once vexp recon notes are written.
-- Old `PLAN.md` is superseded for Phases 2–6 but the gem-skeleton/engine-shell/config phases (0–1) in `PLAN.md` still apply for any setup that hasn't shipped yet.
+See **V1 status (2026-05-28)** below for what's already shipped before deciding what to do next.
+
+## V1 status (2026-05-28)
+
+**All five phases done. Branches on origin, none merged to main yet.**
+
+Lineage (each branch is the previous one's base):
+
+- `pax/phase-b-disk-artifacts` — Phase A vexp recon notes + Phase B disk primitives + Scanner→disk → Indexer + strict flip (DB is derived; ArtifactBuilder never persists)
+- `coda/phase-c-prism-extraction` — Prism extractor, routes.json loader, `signature` field on artifact yml + DB column, indexer round-trips it
+- `coda/phase-d-mcp-server` — `exe/ruby_sage mcp` stdio JSON-RPC 2.0 server, no Rails boot, 5 tools (`find_relevant_files`, `get_file_context`, `get_route_handler`, `search_symbols`, `index_status`) with JSON Schemas declared. Smoke-tested with `initialize` + `tools/list`, both respond cleanly.
+- `coda/phase-e-install-generator` — `rails generate ruby_sage:install [--with-claude-config]` with initializer template, `.ruby_sage/` seeding, `.claude.json` deep-merge, generator specs.
+
+Suite at Phase E head: **311 specs green, RuboCop clean across 170 files.**
+
+Carry-over caveats:
+- File watcher (listen-gem) intentionally deferred in Phase D. V1 ships without it.
+- vexp recon schemas in `notes/vexp-mcp-surface.md` are docs-derived, not verified from a raw `tools/list` manifest (none was public).
+- Install generator hasn't been run against a real Rails app — only spec'd in isolation. **Phase F is the first real install + smoke test.**
+
+## What's next (Phase F: real-world rollout)
+
+Per the original NEXT.md ordering: **ChangeMaker → AIT/Hub + NA Travel → TYB server**. ChangeMaker is the biggest stress test by design (Rails 5.2, the oldest + largest Rails app Daniel runs).
+
+Steps for the first install:
+1. In a fresh branch on the host repo (e.g. `dw/try-ruby-sage`), add `gem "ruby_sage", path: "../ruby_sage"` to the Gemfile.
+2. `bundle install`
+3. `rails generate ruby_sage:install --with-claude-config`
+4. `rails db:migrate`
+5. `bundle exec rake ruby_sage:scan` — first scan can take a while on a large app.
+6. Wire the MCP into your Claude Code via the generated `.claude.json` (or copy/paste from README's "Claude Code integration").
+7. Try it — ask Claude Code to do something that exercises structural knowledge (find a symbol, resolve a route).
+
+### Tied to Phase F: the benchmark / LinkedIn writeup
+
+Daniel wants to measure RubySage's value with numbers, then write it up on LinkedIn. Two runs of the same task on the same repo:
+
+- **Before**: vanilla Claude Code session, no MCP. Capture wall time, token usage (from `~/.claude/projects/*/...jsonl`), and number of grep/read/glob calls. Subjective 1–5 quality.
+- **After**: same task, RubySage MCP wired in. Same metrics.
+
+Candidate task (provisional, Daniel to bless): "Find every place we call `Stripe::Charge` (or an equivalent app-specific symbol) and write a short audit doc explaining the flow." Exercises symbol search, route resolution, and synthesis — three of our five V1 tools.
+
+The benchmark needs Daniel's task pick AND a green-light to run on ChangeMaker before kicking off. Until then, Phase F can proceed without it.
+
+## Deferred for V1.5+ (not now)
+
+- File watcher
+- LLM summaries per file (digest-cached; ~$0.50 / 500-file Rails repo at Haiku rates)
+- Dependency graph (`graph.json`) with edges from AR associations + constant refs + route mappings
+- `RubySage::Retriever#call(query, page_context:, budget:)` — pivot/skeleton retrieval with token budget awareness
+- `list_recent_changes` MCP tool — what changed since timestamp/sha
+- Tree-sitter for non-Ruby repos
+- Streaming responses in the widget chat (provider `chat` already accepts a block; V1 ignores it)
 
 ## Decisions log (for posterity)
 
 - **2026-05-27** — Locked single-gem bundling (not splitting `ruby_sage_mcp`), widget frozen as-is, V1 scope cut to structural extraction only, deferred LLM summaries + graph + retriever, dynamic-DB-report use case parked as separate future product.
+- **2026-05-28** — V1 complete (all 5 phases shipped). Phase F (real-world install) is the next milestone. Branches not yet merged to main; PR strategy is one-per-phase for reviewability.
