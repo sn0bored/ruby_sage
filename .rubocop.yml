@@ -43,6 +43,11 @@ Rails/HttpStatus:
   Exclude:
     - "app/controllers/ruby_sage/admin/knowledge_chunks_controller.rb"
 
+# `params.expect` is Rails 8-only. Keep the Rails 7.1-compatible
+# `require(...).permit(...)` boundary while 7.1 remains supported.
+Rails/StrongParametersExpect:
+  Enabled: false
+
 # Retriever uses Set directly and must remain loadable outside a fully booted
 # Rails application.
 Lint/RedundantRequireStatement:
