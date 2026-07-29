@@ -13,7 +13,7 @@ bundle exec rubocop
 gem build ruby_sage.gemspec
 ```
 
-`.ruby-version` pins development to Ruby 3.3.4. The gem itself supports Ruby 2.7+ — see [Compatibility](#compatibility) below.
+`.ruby-version` pins development to Ruby 3.3.4. The gem supports Ruby 3.2+.
 
 The `spec/dummy/` Rails app is what tests run against. It is intentionally minimal and synthetic — please do not add real-world domain code.
 
@@ -36,15 +36,8 @@ Open an issue before sending a PR for any of these:
 
 ## Compatibility
 
-RubySage supports **Rails 5.2+ / Ruby 2.7+**. That's a deliberate choice: host apps shouldn't have to upgrade just to adopt RubySage. Your code must stay portable:
-
-- No `Data.define`, no shorthand hash-key punning (`{ x:, y: }`), no rightward assignment, no anonymous block forwarding (`&`).
-- Be explicit about kwargs at the Ruby 2.7 → 3.0 boundary. Use `**kwargs` consistently.
-- No Rails-7-only idioms (`enum :status, [...]` symbol-first form is out — use `enum status: { ... }`).
-- No Zeitwerk-only autoload assumptions; classic loader must also work.
-- Asset pipeline: Sprockets-only until [#4](https://github.com/sn0bored/ruby_sage/issues/4) lands.
-
-When in doubt, write code that would work in Ruby 2.7 / Rails 5.2 — every newer Ruby/Rails accepts it too. CI verifies cross-version compatibility via a matrix in `.github/workflows/ci.yml`.
+RubySage supports **Rails 7.1+ / Ruby 3.2+**. CI verifies the lower bound and
+the current Rails major through the matrix in `.github/workflows/ci.yml`.
 
 ## Quality gates
 

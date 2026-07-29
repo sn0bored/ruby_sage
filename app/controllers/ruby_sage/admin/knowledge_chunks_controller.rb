@@ -34,7 +34,7 @@ module RubySage
           redirect_to ruby_sage.admin_knowledge_chunks_path,
                       notice: "Knowledge entry created."
         else
-          render :new, status: :unprocessable_content
+          render :new, status: 422
         end
       end
 
@@ -49,7 +49,7 @@ module RubySage
           redirect_to ruby_sage.admin_knowledge_chunk_path(@chunk),
                       notice: "Knowledge entry updated."
         else
-          render :edit, status: :unprocessable_content
+          render :edit, status: 422
         end
       end
 

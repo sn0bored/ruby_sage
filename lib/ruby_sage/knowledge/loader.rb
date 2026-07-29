@@ -28,7 +28,7 @@ module RubySage
       def load
         return [] unless @path.exist?
 
-        Dir.glob(@path.join("*.{yml,yaml}").to_s).sort.flat_map do |file|
+        Dir.glob(@path.join("*.{yml,yaml}").to_s).flat_map do |file|
           load_file(file)
         end
       end
@@ -36,7 +36,7 @@ module RubySage
       private
 
       def load_file(file)
-        data = YAML.safe_load(File.read(file), permitted_classes: [Date, Time, Symbol], aliases: true)
+        data = YAML.safe_load_file(file, permitted_classes: [Date, Time, Symbol], aliases: true)
         entries = extract_entries(data)
         entries.map { |entry| normalize_entry(entry, file) }
       rescue Psych::Exception => e

@@ -4,7 +4,7 @@ plugins:
 
 AllCops:
   NewCops: enable
-  TargetRubyVersion: 2.7
+  TargetRubyVersion: 3.2
   SuggestExtensions: false
   Exclude:
     - "spec/dummy/db/schema.rb"
@@ -36,6 +36,23 @@ RSpec/MultipleExpectations:
 
 Rails/I18nLocaleTexts:
   Enabled: false
+
+# Numeric 422 works across the Rails 7.1/Rack 2 and Rails 8/Rack 3 status-name
+# transition. The symbolic aliases differ between those stacks.
+Rails/HttpStatus:
+  Exclude:
+    - "app/controllers/ruby_sage/admin/knowledge_chunks_controller.rb"
+
+# `params.expect` is Rails 8-only. Keep the Rails 7.1-compatible
+# `require(...).permit(...)` boundary while 7.1 remains supported.
+Rails/StrongParametersExpect:
+  Enabled: false
+
+# Retriever uses Set directly and must remain loadable outside a fully booted
+# Rails application.
+Lint/RedundantRequireStatement:
+  Exclude:
+    - "lib/ruby_sage/retriever.rb"
 
 RSpec/SpecFilePathFormat:
   Exclude:
