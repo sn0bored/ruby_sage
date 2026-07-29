@@ -266,12 +266,13 @@ end
 - **Server-side auth.** Every chat / retrieve request goes through `before_action :authorize_ruby_sage!`. The widget UI is just UX; the endpoint is the gate.
 - **Secret redaction.** YAML values for keys matching `(api_key|secret|password|token|access_key|private_key|client_secret)` are replaced with `[REDACTED]` at scan time. `ENV[...]` symbol references are preserved (the model needs to know which dependencies exist), but values never are. `credentials.yml.enc` is excluded entirely.
 - **Provider data policies.** Anthropic and OpenAI receive your code summaries (not raw source by default) when you ask questions. Read each provider's data retention policies before scanning sensitive code.
-- **Older Ruby/Rails.** RubySage supports Rails 5.2+ / Ruby 2.7+ to avoid forcing host-app upgrades, but Ruby 2.7 and Rails 5.2/6.x are EOL. If you're on EOL Ruby/Rails, your app's security exposure is on you — please upgrade when you can.
+- **Supported Ruby/Rails.** RubySage targets maintained application stacks.
+  Older gem releases remain available for legacy Rails applications.
 
 ## Compatibility
 
-- **Ruby**: 2.7+
-- **Rails**: 5.2+
+- **Ruby**: 3.2+
+- **Rails**: 7.1+
 - **Database**: anything ActiveRecord supports (PostgreSQL, MySQL, SQLite tested).
 
 CI tests across the matrix. See `.github/workflows/ci.yml`.
@@ -283,7 +284,7 @@ CI tests across the matrix. See `.github/workflows/ci.yml`.
 
 ## Contributing
 
-Pull requests welcome. Run `bundle exec rspec` and `bundle exec rubocop` before opening one. Code must stay portable to Ruby 2.7 / Rails 5.2.
+Pull requests welcome. Run `bundle exec rspec` and `bundle exec rubocop` before opening one.
 
 ## License
 

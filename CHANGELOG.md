@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- Align the declared support window and CI matrix with maintained Ruby and Rails releases: Ruby 3.2+ and Rails 7.1+.
+
+### Fixed
+
+- Use a cross-version numeric HTTP status for validation failures.
+- Run the engine migration installer through the standard `railties:install:migrations` task.
+- Clear lint drift introduced by newer RuboCop releases.
+
 ## [0.3.4] - 2026-05-18
 
 ### Fixed

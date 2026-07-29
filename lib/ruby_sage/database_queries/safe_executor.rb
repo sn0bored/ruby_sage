@@ -18,10 +18,10 @@ module RubySage
       DEFAULT_MAX_CELL_BYTES = 1_024
       DEFAULT_MAX_SQL_LENGTH = 4_000
 
-      LEADING_COMMENT_PATTERN = %r{\A(?:\s|--[^\n]*\n|/\*.*?\*/)+}m.freeze
+      LEADING_COMMENT_PATTERN = %r{\A(?:\s|--[^\n]*\n|/\*.*?\*/)+}m
       private_constant :LEADING_COMMENT_PATTERN
 
-      LIMIT_PATTERN = /\bLIMIT\s+\d+/i.freeze
+      LIMIT_PATTERN = /\bLIMIT\s+\d+/i
       private_constant :LIMIT_PATTERN
 
       # @param connection [ActiveRecord::ConnectionAdapters::AbstractAdapter]
