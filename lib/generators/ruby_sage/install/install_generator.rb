@@ -28,7 +28,7 @@ module RubySage
       #
       # @return [void]
       def install_migrations
-        rake "ruby_sage:install:migrations"
+        rake "railties:install:migrations", env: "FROM=ruby_sage"
       end
     end
   end

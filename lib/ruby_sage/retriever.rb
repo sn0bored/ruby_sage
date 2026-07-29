@@ -208,7 +208,7 @@ module RubySage
       text = text.gsub(/\[([^\]]+)\]\([^)]*\)/, '\1')        # [text](url) -> text
       text = text.gsub(/[`*_~]+/, "")                        # ` * _ ~
       text = text.gsub(/^#+\s*/m, "")                        # leading # headers
-      text = text.gsub(/&amp;/, "&").gsub(/&lt;/, "<").gsub(/&gt;/, ">").gsub(/&quot;/, '"')
+      text = text.gsub("&amp;", "&").gsub("&lt;", "<").gsub("&gt;", ">").gsub("&quot;", '"')
       text.squeeze(" ").strip
     end
   end
