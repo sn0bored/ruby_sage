@@ -289,3 +289,8 @@ Pull requests welcome. Run `bundle exec rspec` and `bundle exec rubocop` before 
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+---
+
+Built by [Lanier](https://lanierdev.com), an applied AI studio. More free
+tools at [lanierdev.com/tools](https://lanierdev.com/tools).
