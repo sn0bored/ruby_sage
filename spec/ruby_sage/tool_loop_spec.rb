@@ -59,16 +59,19 @@ RSpec.describe RubySage::ToolLoop do
       expect(result[:iterations]).to eq(2)
     end
 
-    it "stops at max_iterations even if the model keeps requesting tools" do
+    it "forces a final tool-less answer when max_iterations is hit mid-tool-use" do
       provider = instance_double(RubySage::Providers::Base)
-      allow(provider).to receive(:chat).and_return(tool_use_response).at_least(:once)
+      allow(provider).to receive(:chat).and_return(tool_use_response, tool_use_response, final_response)
 
       result = described_class.new(registry: registry, provider: provider, max_iterations: 2).run(
         system_prompt: "system", cached_context: "ctx", messages: [{ role: "user", content: "loop" }]
       )
 
-      expect(result[:iterations]).to eq(2)
-      expect(provider).to have_received(:chat).twice
+      expect(result[:iterations]).to eq(3)
+      expect(result[:answer]).to eq("Done.")
+      expect(result[:tool_calls].size).to eq(2)
+      expect(provider).to have_received(:chat).exactly(3).times
+      expect(provider).to have_received(:chat).with(hash_including(tools: nil)).once
     end
   end
 

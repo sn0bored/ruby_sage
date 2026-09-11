@@ -97,7 +97,7 @@ module RubySage
         result = nil
         connection.transaction(requires_new: true) do
           apply_statement_timeout
-          result = connection.exec_query(sql)
+          result = connection.exec_query(with_mysql_timeout_hint(sql))
           raise ActiveRecord::Rollback
         end
         result
@@ -107,6 +107,16 @@ module RubySage
         return unless connection.adapter_name.to_s.match?(/PostgreSQL/i)
 
         connection.execute("SET LOCAL statement_timeout = #{timeout_ms.to_i}")
+      end
+
+      # MySQL has no transaction-scoped timeout; a SESSION variable would
+      # outlive the query on a pooled connection. The per-statement optimizer
+      # hint (MySQL 5.7.8+) is scoped to this SELECT only. MariaDB ignores it
+      # with a warning.
+      def with_mysql_timeout_hint(sql)
+        return sql unless connection.adapter_name.to_s.match?(/mysql/i)
+
+        sql.sub(/\A\s*SELECT\b/i, "SELECT /*+ MAX_EXECUTION_TIME(#{timeout_ms.to_i}) */")
       end
 
       def format_success(sql, result)

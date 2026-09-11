@@ -151,7 +151,7 @@ module RubySage
 
     def check_chat_turn_persistence
       return ok_finding("chat_turns", "Chat turn persistence disabled") unless config.persist_chat_turns
-      return ok_finding("chat_turns", "Chat turn persistence enabled") if defined?(ChatTurn) && ChatTurn.table_exists?
+      return ok_finding("chat_turns", "Chat turn persistence enabled") if RubySage::ChatTurn.table_exists?
 
       error_finding(
         "chat_turns",
@@ -180,7 +180,7 @@ module RubySage
     end
 
     def knowledge_table_exists?
-      defined?(KnowledgeChunk) && KnowledgeChunk.table_exists?
+      RubySage::KnowledgeChunk.table_exists?
     rescue StandardError
       false
     end

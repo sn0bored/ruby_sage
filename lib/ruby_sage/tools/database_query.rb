@@ -16,11 +16,20 @@ module RubySage
       # @return [String]
       def self.description
         <<~TEXT.strip
-          Run a single read-only SQL SELECT against the host application's database.
+          Run a single read-only SQL SELECT against the host application's database
+          (#{dialect_name}). Use that dialect's syntax and functions.
           Returns up to 100 rows. Supports standard ANSI SQL (table joins, WHERE,
           GROUP BY, ORDER BY, LIMIT). UPDATE/INSERT/DELETE/DDL are rejected.
           If you need to know what tables or columns exist, call describe_table first.
         TEXT
+      end
+
+      # @return [String] human-readable adapter name, e.g. "MySQL", "PostgreSQL".
+      def self.dialect_name
+        adapter = ActiveRecord::Base.connection.adapter_name.to_s
+        adapter =~ /mysql/i ? "MySQL" : adapter
+      rescue StandardError
+        "SQL"
       end
 
       # @return [Hash]

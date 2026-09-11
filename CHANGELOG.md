@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.3.5] - 2026-09-11
+
+Findings from the first production-shaped host install (a Rails 5.2 / MySQL 8 app).
+
+### Fixed
+
+- **Empty answer when the tool loop hit `tool_loop_max_iterations`.** If the model was still requesting tools on the last permitted round, the turn returned `answer: ""`. The loop now makes one more provider call with tools withheld and a wrap-up instruction, so the user gets a summary of what was found and what could not be verified. `iterations` in the response counts that extra round.
+- **`DuplicateMigrationNameError` after `rails g ruby_sage:install`.** The generator copies the engine migrations into the host (`*.ruby_sage.rb`) and the engine also appended its own migrations path, so `db:migrate` saw every migration twice. The engine now skips the append when copied migrations are present.
+- **`rake ruby_sage:doctor` reported the chat_turns / knowledge tables missing when they existed.** `defined?(ChatTurn)` does not trigger autoloading, so the check was a false negative on any host that had not yet loaded the model. The checks reference the constants directly.
+
+### Changed
+
+- **MySQL query timeout.** `SafeExecutor` previously only enforced `query_timeout_ms` on PostgreSQL. On MySQL it now injects the per-statement `/*+ MAX_EXECUTION_TIME(ms) */` optimizer hint (MySQL 5.7.8+; MariaDB ignores it with a warning). A per-statement hint was chosen over `SET SESSION max_execution_time` because a session variable would outlive the query on a pooled connection.
+- **`query_database` tool description names the SQL dialect** ("MySQL", "PostgreSQL", ...) so the model stops reaching for `ILIKE` on MySQL and `DATE_FORMAT` on PostgreSQL.
+
 ## [0.3.4] - 2026-05-18
 
 ### Fixed

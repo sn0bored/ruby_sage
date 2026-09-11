@@ -45,13 +45,27 @@ module RubySage
         append_assistant_and_tool_results(working, response)
       end
 
-      finished(response, executed_calls, iterations)
+      return finished(response, executed_calls, iterations) if response.nil? || no_tool_calls?(response)
+
+      finished(wrap_up(system_prompt, cached_context, working), executed_calls, iterations + 1)
     end
+
+    WRAP_UP_MESSAGE = "You have reached the tool-call limit for this turn. " \
+                      "Answer now from what you have already found, and say " \
+                      "what you could not verify."
 
     private
 
-    def call_provider(system_prompt, cached_context, messages)
-      tools = @registry.empty? ? nil : @registry.to_anthropic
+    # The cap was hit while the model still wanted tools: without this the
+    # turn would return an empty answer. One more round, tools withheld,
+    # so the model summarises what it has.
+    def wrap_up(system_prompt, cached_context, messages)
+      messages << { role: "user", content: WRAP_UP_MESSAGE }
+      call_provider(system_prompt, cached_context, messages, tools: false)
+    end
+
+    def call_provider(system_prompt, cached_context, messages, tools: true)
+      tools = tools && !@registry.empty? ? @registry.to_anthropic : nil
       @provider.chat(
         system_prompt: system_prompt,
         cached_context: cached_context,
