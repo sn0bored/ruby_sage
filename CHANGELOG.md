@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.6
+
+- Hosts on Rails 5.2 defaults (no forgery protection on `ActionController::Base`) no longer fail to boot with eager loading: `Internal::RetrieveController` skips `verify_authenticity_token` with `raise: false`.
+
+
 ## [0.3.5] - 2026-09-11
 
 Findings from the first production-shaped host install (a Rails 5.2 / MySQL 8 app).

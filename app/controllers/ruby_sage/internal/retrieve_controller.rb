@@ -3,7 +3,7 @@
 module RubySage
   module Internal
     class RetrieveController < RubySage::ApplicationController
-      skip_before_action :verify_authenticity_token
+      skip_before_action :verify_authenticity_token, raise: false
 
       # Returns retrieved code context for a natural-language query.
       #
